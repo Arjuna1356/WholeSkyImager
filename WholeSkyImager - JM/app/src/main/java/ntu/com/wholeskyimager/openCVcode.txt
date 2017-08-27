@@ -1,0 +1,51 @@
+ public static void dumpParameters(Camera.Parameters parameters) {
+        String flattened = parameters.flatten();
+        StringTokenizer tokenizer = new StringTokenizer(flattened, ";");
+        Log.d(TAG, "Dump all camera parameters:");
+        while (tokenizer.hasMoreElements()) {
+            Log.d(TAG, tokenizer.nextToken());
+        }
+    }
+
+// Start OpenCV HDR Algo
+        /* native code:
+
+        Mat hdr;
+        Ptr<MergeDebevec> merge_debevec = createMergeDebevec();
+        merge_debevec->process(images, hdr, times, response);
+        */
+        Mat hdr;
+//        MergeDebevec
+
+        //mImageSurfaceView.refreshCamera();
+        /*
+        //do something
+        Log.d("Button Pressed", "Edge detection should be started!");
+
+        //File organization
+        String inputFileName = "NTU_1_GS";
+        String inputExtension = "png";
+        String inputDir = getCacheDir().getAbsolutePath();  // use the cache directory for i/o
+        String outputDir = getCacheDir().getAbsolutePath();
+        String outputExtension = "png";
+        String inputFilePath = inputDir + File.separator + inputFileName + "." + inputExtension;
+
+        Log.d(this.getClass().getSimpleName(), "loading " + inputFilePath + "...");
+        Mat image = Imgcodecs.imread(inputFilePath);
+        Log.d(this.getClass().getSimpleName(), "width of " + inputFileName + ": " + image.width());
+
+        int threshold1 = 50;
+        int threshold2 = 100;
+
+        Mat im_canny = new Mat();
+        Imgproc.Canny(image, im_canny, threshold1, threshold2);
+        String cannyFilename = outputDir + File.separator + inputFileName + "_canny-" + threshold1 + "-" + threshold2 + "." + outputExtension;
+        Log.d(this.getClass().getSimpleName(), "Writing " + cannyFilename);
+        Imgcodecs.imwrite(cannyFilename, im_canny);
+        //inputImage.setImageResource(R.drawable.my_image);
+        Bitmap bitmapToDisplay = null;
+        bitmapToDisplay = BitmapFactory.decodeFile(cannyFilename);
+        outputImage.setImageBitmap(BitmapFactory.decodeFile(cannyFilename));
+        //outputImage.getLayoutParams().width = inputImage.getWidth();
+        Log.d("Statusupdate", "Edge detection finished");
+        */

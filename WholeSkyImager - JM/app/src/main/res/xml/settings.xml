@@ -1,0 +1,73 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android">
+    <PreferenceCategory android:title="General">
+        <EditTextPreference
+            android:defaultValue="404"
+            android:key="wahrsisNo"
+            android:title="WAHRSIS Number"
+            />
+        <EditTextPreference
+            android:defaultValue="2"
+            android:key="picInterval"
+            android:singleLine="true"
+            android:summary="Time between two image series in minutes."
+            android:title="Picture Interval"
+            />
+    </PreferenceCategory>
+
+    <PreferenceCategory android:title="Imaging">
+        <SwitchPreference
+            android:defaultValue="false"
+            android:key="createHDR"
+            android:summary="Enable for HDR image creation on this phone."
+            android:title="Create HDR Image"/>
+        <SwitchPreference
+            android:defaultValue="false"
+            android:key="createRAW"
+            android:summary="Upload a RAW HDR Image instead of JPEG."
+            android:title="Upload RAW Image"/>
+        <SwitchPreference
+            android:defaultValue="false"
+            android:key="realignImage"
+            android:summary="This option will cause images to be realigned automatically."
+            android:title="Rotate image"/>
+        <SwitchPreference
+            android:defaultValue="false"
+            android:key="extendedExif"
+            android:summary="Enable to store location, heading and gravity in image files."
+            android:title="Extended exif data"/>
+    </PreferenceCategory>
+    <PreferenceCategory android:title="Network">
+        <EditTextPreference
+            android:defaultValue="f26543bea24e3545a8ef9708dffd7ce5d35127e2"
+            android:key="authorToken"
+            android:singleLine="true"
+            android:summary="Do not alter. Only for new systems. Ask Admin for Token."
+            android:title="Authorization Token"/>
+        <SwitchPreference
+            android:defaultValue="false"
+            android:key="uploadImages"
+            android:summary="Uploads Low, Med, High EV Images plus HDR depending on state of Create HDR Image switch."
+            android:title="Upload Images"
+            />
+        <EditTextPreference
+            android:defaultValue="NULL"
+            android:key="authorizationToken"
+            android:summary="Necessary for each new WAHRSIS."
+            android:title="Change Authorization Token"/>
+    </PreferenceCategory>
+
+    <PreferenceCategory android:title="Debugging">
+        <SwitchPreference
+            android:defaultValue="false"
+            android:key="debugLogging"
+            android:summary="Enable Log Output through ADB."
+            android:title="Logging"/>
+        <SwitchPreference
+            android:defaultValue="false"
+            android:key="debugKeepfiles"
+            android:summary="Keep a copy of each image on the internal storage."
+            android:title="Keep Files"/>
+    </PreferenceCategory>
+</PreferenceScreen>

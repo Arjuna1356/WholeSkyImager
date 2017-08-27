@@ -1,0 +1,90 @@
+<RelativeLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    tools:context="sg.edu.ntu.wholeskyimager.MainActivity">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:weightSum="1"
+        android:layout_alignParentTop="true"
+        android:layout_alignParentLeft="true"
+        android:layout_alignParentStart="true">
+
+        <GridLayout
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:layout_marginBottom="4dp"
+            android:layout_marginLeft="4dp"
+            android:layout_marginRight="4dp"
+            android:layout_marginTop="4dp">
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="match_parent"
+                android:text="Status: "/>
+            <TextView
+                android:id="@+id/tvStatusInfo"
+                android:layout_width="wrap_content"
+                android:layout_height="match_parent"
+                android:text="NULL"/>
+            <TextView
+                android:id="@+id/tvConnectionStatus"
+                android:layout_width="wrap_content"
+                android:layout_height="match_parent"
+                android:layout_gravity="right"
+                android:text="offline"/>
+        </GridLayout>
+
+        <FrameLayout
+            android:id="@+id/camera_preview"
+            android:layout_width="match_parent"
+            android:layout_height="300dp"
+            android:background="#cccccc"/>
+
+        <LinearLayout
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center_horizontal"
+            android:orientation="horizontal">
+
+            <FrameLayout
+                android:id="@+id/runCaptureFrame"
+                android:layout_width="150dp"
+                android:layout_height="wrap_content" />
+
+            <Button
+                android:id="@+id/buttonStop"
+                android:layout_width="150dp"
+                android:layout_height="wrap_content"
+                android:text="@string/stopButton_text"/>
+        </LinearLayout>
+
+        <TextView
+            android:text="Event Log"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:id="@+id/textTitleEventLog"
+            android:textColor="#000000"
+            android:layout_marginBottom="3dp"/>
+        <TextView
+            android:text="Startup..."
+            android:layout_width="fill_parent"
+            android:layout_height="120dp"
+            android:id="@+id/tvEventLog"
+            android:maxLines = "50"
+            android:scrollbars = "vertical"
+            android:layout_weight="7.36"
+            android:gravity="bottom"/>
+
+        <!--<Button-->
+            <!--android:id="@+id/buttonRun"-->
+            <!--android:layout_width="match_parent"-->
+            <!--android:layout_height="wrap_content"-->
+            <!--android:onClick="startImaging"-->
+            <!--android:text="@string/button1_text" />-->
+    </LinearLayout>
+</RelativeLayout>
