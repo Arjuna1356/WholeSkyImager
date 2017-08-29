@@ -1,6 +1,6 @@
 /*
  * This file is auto-generated.  DO NOT MODIFY.
- * Original file: D:\\Users\\Arjuna\\Documents\\NTU Projects\\FYP\\WholeSkyImagerLegacy\\openCVLibrary330\\src\\main\\aidl\\org\\opencv\\engine\\OpenCVEngineInterface.aidl
+ * Original file: D:\\Users\\Arjuna\\Documents\\NTU Projects\\FYP\\WholeSkyImagerRecreateLegacy\\openCVLibrary330\\src\\main\\aidl\\org\\opencv\\engine\\OpenCVEngineInterface.aidl
  */
 package org.opencv.engine;
 /**

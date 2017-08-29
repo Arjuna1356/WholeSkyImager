@@ -1,5 +1,5 @@
 <resources>
-    <string name="app_name">WholeSkyImager</string>
+    <string name="app_name">WholeSkyImagerLegacy</string>
     <string name="main_label">Camera Test</string>
     <string name="runButton_text">Run</string>
     <string name="captureButton_text">Capture</string>

@@ -14,9 +14,6 @@ import android.widget.Button;
 
 import android.support.annotation.NonNull;
 
-import android.support.v4.app.FragmentManager;
-import android.support.v4.app.FragmentTransaction;
-
 import android.util.Log;
 
 import android.os.Handler;
@@ -39,39 +36,38 @@ public class MainActivity extends AppCompatActivity
 
     private static final String TAG = "WSIApp";
 
-    private FragmentManager fragmentManager;
-
-    private RunFragment runFragment;
-    private CaptureFragment captureFragment;
-
     @Override
     protected void onCreate(Bundle savedInstanceState)
     {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
-        fragmentManager = getSupportFragmentManager();
-
         camera = new Camera(this);
         frameLayout = (FrameLayout) findViewById(R.id.camera_preview);
 
-        runFragment = new RunFragment();
-        captureFragment = new CaptureFragment();
+        runButton = (Button) findViewById(R.id.buttonRun);
+        assert runButton != null;
+        runButton.setTag(0);
+        runButton.setOnClickListener(new View.OnClickListener()
+        {
+            @Override
+            public void onClick(View v)
+            {
+                final int status = (Integer) v.getTag();
 
-        FragmentTransaction fragmentTransaction = fragmentManager.beginTransaction();
-        fragmentTransaction.add(R.id.runCaptureFrame, runFragment, "runCaptureFragment");
-        fragmentTransaction.commit();
+                if(status == 0)
+                {
+                    camera.openCamera(frameLayout);
+                    runButton.setText(getResources().getString(R.string.captureButton_text));
+                    v.setTag(1);
+                }
+                else
+                {
+                    camera.takePicture();
+                }
 
-//        runButton = (Button) findViewById(R.id.buttonRun);
-//        assert runButton != null;
-//        runButton.setOnClickListener(new View.OnClickListener()
-//        {
-//            @Override
-//            public void onClick(View v)
-//            {
-//                camera.openCamera(frameLayout);
-//            }
-//        });
+            }
+        });
 
         stopButton = (Button) findViewById(R.id.buttonStop);
         assert stopButton != null;
@@ -81,9 +77,8 @@ public class MainActivity extends AppCompatActivity
             public void onClick(View v)
             {
                 camera.closeCamera(frameLayout);
-                FragmentTransaction fragmentTransaction = fragmentManager.beginTransaction();
-                fragmentTransaction.replace(R.id.runCaptureFrame, runFragment, "runFragment");
-                fragmentTransaction.commit();
+                runButton.setTag(0);
+                runButton.setText(getResources().getString(R.string.runButton_text));
             }
         });
 
@@ -153,11 +148,6 @@ public class MainActivity extends AppCompatActivity
     public Camera getCamera()
     {
         return this.camera;
-    }
-
-    public CaptureFragment getCaptureFragment()
-    {
-        return captureFragment;
     }
 
     public FrameLayout getFrameLayout()

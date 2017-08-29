@@ -4,7 +4,7 @@ android {
     compileSdkVersion 25
     buildToolsVersion "26.0.1"
     defaultConfig {
-        applicationId "sg.edu.ntu.wholeskyimager"
+        applicationId "sg.edu.ntu.wholeskyimagerrecreate"
         minSdkVersion 23
         targetSdkVersion 23
         versionCode 1
