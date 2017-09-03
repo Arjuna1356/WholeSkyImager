@@ -4,7 +4,7 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    tools:context="sg.edu.ntu.wholeskyimager.MainActivity">
+    tools:context=".MainActivity">
 
     <LinearLayout
         android:layout_width="match_parent"
@@ -14,6 +14,16 @@
         android:layout_alignParentTop="true"
         android:layout_alignParentLeft="true"
         android:layout_alignParentStart="true">
+
+        <android.support.v7.widget.Toolbar
+            android:id="@+id/my_toolbar"
+            android:layout_width="match_parent"
+            android:layout_height="?attr/actionBarSize"
+            android:background="?attr/colorPrimary"
+            android:elevation="4dp"
+            android:theme="@style/ThemeOverlay.AppCompat.ActionBar"
+            app:popupTheme="@style/ThemeOverlay.AppCompat.Light"
+            app:titleMarginStart="20dp"/>
 
         <GridLayout
             android:layout_width="match_parent"
@@ -51,17 +61,12 @@
             android:layout_gravity="center_horizontal"
             android:orientation="horizontal">
 
-            <!--<FrameLayout-->
-                <!--android:id="@+id/runCaptureFrame"-->
-                <!--android:layout_width="150dp"-->
-                <!--android:layout_height="wrap_content" />-->
-
             <Button
-            android:id="@+id/buttonRun"
-            android:layout_width="150dp"
-            android:layout_height="wrap_content"
-            android:onClick="startImaging"
-            android:text="@string/runButton_text" />
+                android:id="@+id/buttonRun"
+                android:layout_width="150dp"
+                android:layout_height="wrap_content"
+                android:onClick="startImaging"
+                android:text="@string/runButton_text" />
 
             <Button
                 android:id="@+id/buttonStop"
@@ -80,11 +85,10 @@
         <TextView
             android:text="Startup..."
             android:layout_width="fill_parent"
-            android:layout_height="120dp"
+            android:layout_height="match_parent"
             android:id="@+id/tvEventLog"
             android:maxLines = "50"
             android:scrollbars = "vertical"
-            android:layout_weight="7.36"
             android:gravity="bottom"/>
 
     </LinearLayout>

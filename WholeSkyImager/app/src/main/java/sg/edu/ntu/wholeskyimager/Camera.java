@@ -18,14 +18,13 @@ import android.media.Image;
 import android.media.ImageReader;
 import android.os.Environment;
 import android.os.Handler;
-import android.os.WorkSource;
 import android.support.annotation.NonNull;
 import android.util.Log;
 import android.util.Size;
-import android.util.SparseIntArray;
 import android.view.Surface;
 import android.view.TextureView;
 import android.widget.FrameLayout;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import java.io.File;
@@ -39,33 +38,36 @@ import java.util.Arrays;
 import java.util.List;
 
 /**
- * Created by Arjuna on 26/8/2017.
+ * Created by Jonathan on 26/8/2017.
  */
 
 public class Camera
 {
-    private String cameraId;
-    protected CameraDevice cameraDevice;
-    protected CameraCaptureSession cameraCaptureSessions;
-    protected CaptureRequest captureRequest;
-    protected CaptureRequest.Builder captureRequestBuilder;
+    private String cameraId = null;
+    protected CameraDevice cameraDevice = null;
+    protected CameraCaptureSession cameraCaptureSessions = null;
+    protected CaptureRequest.Builder captureRequestBuilder = null;
+    private TextView tvEventLog = null;
+    private final String TAG = this.getClass().getName();
 
-    private static final String TAG = "WSIApp";
+    private Size imageDimension = null;
+    private ImageReader imageReader = null;
 
-    private Size imageDimension;
-    private ImageReader imageReader;
+    private TextureView textureView = null;
 
-    private TextureView textureView;
+    private File file = null;
 
-    private File file;
+    private MainActivity mainActivity = null;
 
-    private Context appContext;
+    private Handler mBackgroundHandler = null;
 
-    private Handler mBackgroundHandler;
+    private float lensHyperFocal = 0.0f;
+    private int isoVal = 100;
 
-    public Camera(Context context)
+    public Camera(MainActivity activity)
     {
-        this.appContext = context;
+        this.mainActivity = activity;
+        this.tvEventLog = mainActivity.getTvEventLog();
     }
 
     public void setHandler(Handler handler)
@@ -79,9 +81,12 @@ public class Camera
         public void onOpened(CameraDevice camera)
         {
             //This is called when the camera is open
-            Log.e(TAG, "onOpened");
+
             cameraDevice = camera;
             createCameraPreview();
+
+            Log.d(TAG, "Camera Opened");
+            tvEventLog.append("\nCamera Opened");
         }
 
         @Override
@@ -104,7 +109,7 @@ public class Camera
         public void onCaptureCompleted(CameraCaptureSession session, CaptureRequest request, TotalCaptureResult result)
         {
             super.onCaptureCompleted(session, request, result);
-            Toast.makeText(appContext, "Saved:" + file, Toast.LENGTH_SHORT).show();
+            Toast.makeText(mainActivity, "Saved:" + file, Toast.LENGTH_SHORT).show();
             createCameraPreview();
         }
     };
@@ -136,27 +141,34 @@ public class Camera
 
     protected void takePicture()
     {
-        if (null == cameraDevice)
+        if (cameraDevice == null)
         {
             Log.e(TAG, "cameraDevice is null");
+            tvEventLog.append("\ncameraDevice is null");
             return;
         }
-        CameraManager manager = (CameraManager) appContext.getSystemService(Context.CAMERA_SERVICE);
+
+        CameraManager manager = (CameraManager) mainActivity.getSystemService(Context.CAMERA_SERVICE);
+
         try
         {
             CameraCharacteristics characteristics = manager.getCameraCharacteristics(cameraDevice.getId());
             Size[] jpegSizes = null;
+
             if (characteristics != null)
             {
                 jpegSizes = characteristics.get(CameraCharacteristics.SCALER_STREAM_CONFIGURATION_MAP).getOutputSizes(ImageFormat.JPEG);
             }
+
             int width = 640;
             int height = 480;
+
             if (jpegSizes != null && 0 < jpegSizes.length)
             {
                 width = jpegSizes[0].getWidth();
                 height = jpegSizes[0].getHeight();
             }
+
             ImageReader reader = ImageReader.newInstance(width, height, ImageFormat.JPEG, 1);
             List<Surface> outputSurfaces = new ArrayList<Surface>(2);
             outputSurfaces.add(reader.getSurface());
@@ -165,12 +177,14 @@ public class Camera
             captureBuilder.addTarget(reader.getSurface());
             captureBuilder.set(CaptureRequest.CONTROL_MODE, CameraMetadata.CONTROL_MODE_AUTO);
             final File file = new File(Environment.getExternalStorageDirectory() + "/pic.jpg");
+
             ImageReader.OnImageAvailableListener readerListener = new ImageReader.OnImageAvailableListener()
             {
                 @Override
                 public void onImageAvailable(ImageReader reader)
                 {
                     Image image = null;
+
                     try
                     {
                         image = reader.acquireLatestImage();
@@ -209,17 +223,20 @@ public class Camera
                     }
                 }
             };
+
             reader.setOnImageAvailableListener(readerListener, mBackgroundHandler);
+
             final CameraCaptureSession.CaptureCallback captureListener = new CameraCaptureSession.CaptureCallback()
             {
                 @Override
                 public void onCaptureCompleted(CameraCaptureSession session, CaptureRequest request, TotalCaptureResult result)
                 {
                     super.onCaptureCompleted(session, request, result);
-                    Toast.makeText(appContext, "Saved:" + file, Toast.LENGTH_SHORT).show();
+                    Toast.makeText(mainActivity, "Saved:" + file, Toast.LENGTH_SHORT).show();
                     createCameraPreview();
                 }
             };
+
             cameraDevice.createCaptureSession(outputSurfaces, new CameraCaptureSession.StateCallback()
             {
                 @Override
@@ -255,6 +272,7 @@ public class Camera
             Surface surface = new Surface(texture);
             captureRequestBuilder = cameraDevice.createCaptureRequest(CameraDevice.TEMPLATE_PREVIEW);
             captureRequestBuilder.addTarget(surface);
+
             cameraDevice.createCaptureSession(Arrays.asList(surface), new CameraCaptureSession.StateCallback()
             {
                 @Override
@@ -273,19 +291,28 @@ public class Camera
                 @Override
                 public void onConfigureFailed(@NonNull CameraCaptureSession cameraCaptureSession)
                 {
-                    Toast.makeText(appContext, "Configuration change", Toast.LENGTH_SHORT).show();
+                    Toast.makeText(mainActivity, "Configuration change", Toast.LENGTH_SHORT).show();
                 }
             }, null);
+
+            captureRequestBuilder.set(CaptureRequest.CONTROL_MODE, CameraMetadata.CONTROL_MODE_AUTO);
+            captureRequestBuilder.set(CaptureRequest.CONTROL_AF_MODE, CameraMetadata.CONTROL_AF_MODE_OFF);
+            captureRequestBuilder.set(CaptureRequest.CONTROL_AE_MODE, CameraMetadata.CONTROL_AE_MODE_OFF);
+            captureRequestBuilder.set(CaptureRequest.LENS_FOCUS_DISTANCE, lensHyperFocal);
+            captureRequestBuilder.set(CaptureRequest.SENSOR_SENSITIVITY, isoVal);
         } catch (CameraAccessException e)
         {
-            e.printStackTrace();
+            Log.e(TAG, "Error creating preview");
+            tvEventLog.append("\nError creating preview");
         }
     }
 
     public void openCamera(FrameLayout frameLayout)
     {
-        CameraManager manager = (CameraManager) appContext.getSystemService(Context.CAMERA_SERVICE);
-        Log.e(TAG, "is camera open");
+        int REQUEST_CAMERA_PERMISSION = mainActivity.getRequestCameraPermission();
+
+        CameraManager manager = (CameraManager) mainActivity.getSystemService(Context.CAMERA_SERVICE);
+
         try
         {
             cameraId = manager.getCameraIdList()[0];
@@ -294,36 +321,39 @@ public class Camera
             assert map != null;
             imageDimension = map.getOutputSizes(SurfaceTexture.class)[0];
 
+//            lensHyperFocal = characteristics.get(CameraCharacteristics.LENS_INFO_MINIMUM_FOCUS_DISTANCE);
+
             // Add permission for camera and let user grant the permission
-            if (appContext.checkSelfPermission(Manifest.permission.CAMERA) == PackageManager.PERMISSION_GRANTED &&
-                    appContext.checkSelfPermission(Manifest.permission.WRITE_EXTERNAL_STORAGE) == PackageManager.PERMISSION_GRANTED)
+            if (mainActivity.checkSelfPermission(Manifest.permission.CAMERA) == PackageManager.PERMISSION_GRANTED &&
+                    mainActivity.checkSelfPermission(Manifest.permission.WRITE_EXTERNAL_STORAGE) == PackageManager.PERMISSION_GRANTED)
             {
                 manager.openCamera(cameraId, stateCallback, null);
-            }
-            else
+            } else
             {
+                mainActivity.requestPermissions(new String[]{Manifest.permission.CAMERA, Manifest.permission.WRITE_EXTERNAL_STORAGE}, REQUEST_CAMERA_PERMISSION);
                 return;
             }
 
-            textureView = new TextureView(appContext);
+            textureView = new TextureView(mainActivity);
             assert textureView != null;
             textureView.setSurfaceTextureListener(textureListener);
 
             frameLayout.addView(textureView);
         } catch (CameraAccessException e)
         {
-            e.printStackTrace();
+            Log.e(TAG, "Error opening camera");
+            tvEventLog.append("\nError opening camera");
         }
-        Log.e(TAG, "openCamera X");
     }
 
     protected void updatePreview()
     {
-        if (null == cameraDevice)
+        if (cameraDevice == null)
         {
-            Log.e(TAG, "updatePreview error, return");
+            Log.e(TAG, "updatePreview error");
+            tvEventLog.append("\nupdatePreview error");
         }
-        captureRequestBuilder.set(CaptureRequest.CONTROL_MODE, CameraMetadata.CONTROL_MODE_AUTO);
+
         try
         {
             cameraCaptureSessions.setRepeatingRequest(captureRequestBuilder.build(), null, mBackgroundHandler);
@@ -335,17 +365,60 @@ public class Camera
 
     public void closeCamera(FrameLayout frameLayout)
     {
-        if (null != cameraDevice)
+        if (cameraDevice != null)
         {
             cameraDevice.close();
             cameraDevice = null;
         }
-        if (null != imageReader)
+
+        if (imageReader != null)
         {
             imageReader.close();
             imageReader = null;
         }
 
         frameLayout.removeView(textureView);
+        textureView = null;
+
+        Log.d(TAG, "Camera Closed");
+        tvEventLog.append("\nCamera Closed");
+    }
+
+    public void runImagingTask()
+    {
+//        timeStampOld = timeStampNew;
+        //do something
+        Log.d(TAG, "Taking Picture");
+        tvEventLog.append("\nTaking Picture");
+        //check the current state before we display the screen
+//        params = camera.getParameters();
+//
+//        //max value: +12, step size: exposure-compensation-step=0.166667. EV: +2
+//        maxExposureComp = params.getMaxExposureCompensation();
+//        minExposureComp = params.getMinExposureCompensation();
+//
+//        timeStampNew = new SimpleDateFormat("yyyy-MM-dd-HH-mm-ss").format(new Date());
+
+//        if(timeStampOld != null && flagDeleteImages) {
+//            //TODO: delte all files
+//            if (flagDeleteImages) {
+//                String filePath = Environment.getExternalStorageDirectory().getPath() + "/WSI/";
+//                File imageFileLow = new File(filePath+timeStampOld+"-wahrsis" + wahrsisModelNr + "-low" + ".jpg");
+//                File imageFileMed = new File(filePath+timeStampOld+"-wahrsis" + wahrsisModelNr + "-med" + ".jpg");
+//                File imageFileHigh = new File(filePath+timeStampOld+"-wahrsis" + wahrsisModelNr + "-high" + ".jpg");
+//                imageFileLow.delete();
+//                imageFileMed.delete();
+//                boolean statusDelete = imageFileHigh.delete();
+//                Log.d(TAG, "Deleting successfull: " + statusDelete);
+//            }
+//        }
+
+//        params.set("mode", "m");
+//        params.set("iso", "ISO100");
+
+//        camera.stopPreview();
+        takePicture();
+        Log.d(TAG, "Pictures successfully taken");
+        tvEventLog.append("\nPictures successfully taken");
     }
 }

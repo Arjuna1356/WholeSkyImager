@@ -5,7 +5,7 @@ android {
     buildToolsVersion "26.0.1"
     defaultConfig {
         applicationId "sg.edu.ntu.wholeskyimagerlegacy"
-        minSdkVersion 14
+        minSdkVersion 18
         targetSdkVersion 23
         versionCode 1
         versionName "1.0"
