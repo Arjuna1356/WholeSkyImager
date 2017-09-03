@@ -75,71 +75,105 @@ public class Camera
         this.mBackgroundHandler = handler;
     }
 
-    private final CameraDevice.StateCallback stateCallback = new CameraDevice.StateCallback()
+    public void openCamera(FrameLayout frameLayout)
     {
-        @Override
-        public void onOpened(CameraDevice camera)
+        int REQUEST_CAMERA_PERMISSION = mainActivity.getRequestCameraPermission();
+
+        CameraManager manager = (CameraManager) mainActivity.getSystemService(Context.CAMERA_SERVICE);
+
+        try
         {
-            //This is called when the camera is open
+            cameraId = manager.getCameraIdList()[0];
+            CameraCharacteristics characteristics = manager.getCameraCharacteristics(cameraId);
+            StreamConfigurationMap map = characteristics.get(CameraCharacteristics.SCALER_STREAM_CONFIGURATION_MAP);
+            assert map != null;
+            imageDimension = map.getOutputSizes(SurfaceTexture.class)[0];
 
-            cameraDevice = camera;
-            createCameraPreview();
+//            lensHyperFocal = characteristics.get(CameraCharacteristics.LENS_INFO_MINIMUM_FOCUS_DISTANCE);
 
-            Log.d(TAG, "Camera Opened");
-            tvEventLog.append("\nCamera Opened");
-        }
+            // Add permission for camera and let user grant the permission
+            if (mainActivity.checkSelfPermission(Manifest.permission.CAMERA) == PackageManager.PERMISSION_GRANTED &&
+                    mainActivity.checkSelfPermission(Manifest.permission.WRITE_EXTERNAL_STORAGE) == PackageManager.PERMISSION_GRANTED)
+            {
+                manager.openCamera(cameraId, stateCallback, null);
+            } else
+            {
+                mainActivity.requestPermissions(new String[]{Manifest.permission.CAMERA, Manifest.permission.WRITE_EXTERNAL_STORAGE}, REQUEST_CAMERA_PERMISSION);
+                return;
+            }
 
-        @Override
-        public void onDisconnected(CameraDevice camera)
+            textureView = new TextureView(mainActivity);
+            assert textureView != null;
+            textureView.setSurfaceTextureListener(textureListener);
+
+            frameLayout.addView(textureView);
+        } catch (CameraAccessException e)
         {
-            cameraDevice.close();
+            Log.e(TAG, "Error opening camera");
+            tvEventLog.append("\nError opening camera");
         }
+    }
 
-        @Override
-        public void onError(CameraDevice camera, int error)
+    public void closeCamera(FrameLayout frameLayout)
+    {
+        if (cameraDevice != null)
         {
             cameraDevice.close();
             cameraDevice = null;
         }
-    };
 
-    final CameraCaptureSession.CaptureCallback captureCallbackListener = new CameraCaptureSession.CaptureCallback()
+        if (imageReader != null)
+        {
+            imageReader.close();
+            imageReader = null;
+        }
+
+        frameLayout.removeView(textureView);
+        textureView = null;
+
+        Log.d(TAG, "Camera Closed");
+        tvEventLog.append("\nCamera Closed");
+    }
+
+    public void runImagingTask()
     {
-        @Override
-        public void onCaptureCompleted(CameraCaptureSession session, CaptureRequest request, TotalCaptureResult result)
-        {
-            super.onCaptureCompleted(session, request, result);
-            Toast.makeText(mainActivity, "Saved:" + file, Toast.LENGTH_SHORT).show();
-            createCameraPreview();
-        }
-    };
+//        timeStampOld = timeStampNew;
+        //do something
+        Log.d(TAG, "Taking Picture");
+        tvEventLog.append("\nTaking Picture");
+        //check the current state before we display the screen
+//        params = camera.getParameters();
+//
+//        //max value: +12, step size: exposure-compensation-step=0.166667. EV: +2
+//        maxExposureComp = params.getMaxExposureCompensation();
+//        minExposureComp = params.getMinExposureCompensation();
+//
+//        timeStampNew = new SimpleDateFormat("yyyy-MM-dd-HH-mm-ss").format(new Date());
 
-    TextureView.SurfaceTextureListener textureListener = new TextureView.SurfaceTextureListener()
-    {
-        @Override
-        public void onSurfaceTextureAvailable(SurfaceTexture surface, int width, int height)
-        {
-        }
+//        if(timeStampOld != null && flagDeleteImages) {
+//            //TODO: delte all files
+//            if (flagDeleteImages) {
+//                String filePath = Environment.getExternalStorageDirectory().getPath() + "/WSI/";
+//                File imageFileLow = new File(filePath+timeStampOld+"-wahrsis" + wahrsisModelNr + "-low" + ".jpg");
+//                File imageFileMed = new File(filePath+timeStampOld+"-wahrsis" + wahrsisModelNr + "-med" + ".jpg");
+//                File imageFileHigh = new File(filePath+timeStampOld+"-wahrsis" + wahrsisModelNr + "-high" + ".jpg");
+//                imageFileLow.delete();
+//                imageFileMed.delete();
+//                boolean statusDelete = imageFileHigh.delete();
+//                Log.d(TAG, "Deleting successfull: " + statusDelete);
+//            }
+//        }
 
-        @Override
-        public void onSurfaceTextureSizeChanged(SurfaceTexture surface, int width, int height)
-        {
-            // Transform you image captured size according to the surface width and height
-        }
+//        params.set("mode", "m");
+//        params.set("iso", "ISO100");
 
-        @Override
-        public boolean onSurfaceTextureDestroyed(SurfaceTexture surface)
-        {
-            return false;
-        }
+//        camera.stopPreview();
+        takePicture();
+        Log.d(TAG, "Pictures successfully taken");
+        tvEventLog.append("\nPictures successfully taken");
+    }
 
-        @Override
-        public void onSurfaceTextureUpdated(SurfaceTexture surface)
-        {
-        }
-    };
-
-    protected void takePicture()
+    public void takePicture()
     {
         if (cameraDevice == null)
         {
@@ -262,7 +296,71 @@ public class Camera
         }
     }
 
-    protected void createCameraPreview()
+    TextureView.SurfaceTextureListener textureListener = new TextureView.SurfaceTextureListener()
+    {
+        @Override
+        public void onSurfaceTextureAvailable(SurfaceTexture surface, int width, int height)
+        {
+        }
+
+        @Override
+        public void onSurfaceTextureSizeChanged(SurfaceTexture surface, int width, int height)
+        {
+            // Transform you image captured size according to the surface width and height
+        }
+
+        @Override
+        public boolean onSurfaceTextureDestroyed(SurfaceTexture surface)
+        {
+            return false;
+        }
+
+        @Override
+        public void onSurfaceTextureUpdated(SurfaceTexture surface)
+        {
+        }
+    };
+
+    final CameraCaptureSession.CaptureCallback captureCallbackListener = new CameraCaptureSession.CaptureCallback()
+    {
+        @Override
+        public void onCaptureCompleted(CameraCaptureSession session, CaptureRequest request, TotalCaptureResult result)
+        {
+            super.onCaptureCompleted(session, request, result);
+            Toast.makeText(mainActivity, "Saved:" + file, Toast.LENGTH_SHORT).show();
+            createCameraPreview();
+        }
+    };
+
+    private final CameraDevice.StateCallback stateCallback = new CameraDevice.StateCallback()
+    {
+        @Override
+        public void onOpened(CameraDevice camera)
+        {
+            //This is called when the camera is open
+
+            cameraDevice = camera;
+            createCameraPreview();
+
+            Log.d(TAG, "Camera Opened");
+            tvEventLog.append("\nCamera Opened");
+        }
+
+        @Override
+        public void onDisconnected(CameraDevice camera)
+        {
+            cameraDevice.close();
+        }
+
+        @Override
+        public void onError(CameraDevice camera, int error)
+        {
+            cameraDevice.close();
+            cameraDevice = null;
+        }
+    };
+
+    private void createCameraPreview()
     {
         try
         {
@@ -307,46 +405,7 @@ public class Camera
         }
     }
 
-    public void openCamera(FrameLayout frameLayout)
-    {
-        int REQUEST_CAMERA_PERMISSION = mainActivity.getRequestCameraPermission();
-
-        CameraManager manager = (CameraManager) mainActivity.getSystemService(Context.CAMERA_SERVICE);
-
-        try
-        {
-            cameraId = manager.getCameraIdList()[0];
-            CameraCharacteristics characteristics = manager.getCameraCharacteristics(cameraId);
-            StreamConfigurationMap map = characteristics.get(CameraCharacteristics.SCALER_STREAM_CONFIGURATION_MAP);
-            assert map != null;
-            imageDimension = map.getOutputSizes(SurfaceTexture.class)[0];
-
-//            lensHyperFocal = characteristics.get(CameraCharacteristics.LENS_INFO_MINIMUM_FOCUS_DISTANCE);
-
-            // Add permission for camera and let user grant the permission
-            if (mainActivity.checkSelfPermission(Manifest.permission.CAMERA) == PackageManager.PERMISSION_GRANTED &&
-                    mainActivity.checkSelfPermission(Manifest.permission.WRITE_EXTERNAL_STORAGE) == PackageManager.PERMISSION_GRANTED)
-            {
-                manager.openCamera(cameraId, stateCallback, null);
-            } else
-            {
-                mainActivity.requestPermissions(new String[]{Manifest.permission.CAMERA, Manifest.permission.WRITE_EXTERNAL_STORAGE}, REQUEST_CAMERA_PERMISSION);
-                return;
-            }
-
-            textureView = new TextureView(mainActivity);
-            assert textureView != null;
-            textureView.setSurfaceTextureListener(textureListener);
-
-            frameLayout.addView(textureView);
-        } catch (CameraAccessException e)
-        {
-            Log.e(TAG, "Error opening camera");
-            tvEventLog.append("\nError opening camera");
-        }
-    }
-
-    protected void updatePreview()
+    private void updatePreview()
     {
         if (cameraDevice == null)
         {
@@ -361,64 +420,5 @@ public class Camera
         {
             e.printStackTrace();
         }
-    }
-
-    public void closeCamera(FrameLayout frameLayout)
-    {
-        if (cameraDevice != null)
-        {
-            cameraDevice.close();
-            cameraDevice = null;
-        }
-
-        if (imageReader != null)
-        {
-            imageReader.close();
-            imageReader = null;
-        }
-
-        frameLayout.removeView(textureView);
-        textureView = null;
-
-        Log.d(TAG, "Camera Closed");
-        tvEventLog.append("\nCamera Closed");
-    }
-
-    public void runImagingTask()
-    {
-//        timeStampOld = timeStampNew;
-        //do something
-        Log.d(TAG, "Taking Picture");
-        tvEventLog.append("\nTaking Picture");
-        //check the current state before we display the screen
-//        params = camera.getParameters();
-//
-//        //max value: +12, step size: exposure-compensation-step=0.166667. EV: +2
-//        maxExposureComp = params.getMaxExposureCompensation();
-//        minExposureComp = params.getMinExposureCompensation();
-//
-//        timeStampNew = new SimpleDateFormat("yyyy-MM-dd-HH-mm-ss").format(new Date());
-
-//        if(timeStampOld != null && flagDeleteImages) {
-//            //TODO: delte all files
-//            if (flagDeleteImages) {
-//                String filePath = Environment.getExternalStorageDirectory().getPath() + "/WSI/";
-//                File imageFileLow = new File(filePath+timeStampOld+"-wahrsis" + wahrsisModelNr + "-low" + ".jpg");
-//                File imageFileMed = new File(filePath+timeStampOld+"-wahrsis" + wahrsisModelNr + "-med" + ".jpg");
-//                File imageFileHigh = new File(filePath+timeStampOld+"-wahrsis" + wahrsisModelNr + "-high" + ".jpg");
-//                imageFileLow.delete();
-//                imageFileMed.delete();
-//                boolean statusDelete = imageFileHigh.delete();
-//                Log.d(TAG, "Deleting successfull: " + statusDelete);
-//            }
-//        }
-
-//        params.set("mode", "m");
-//        params.set("iso", "ISO100");
-
-//        camera.stopPreview();
-        takePicture();
-        Log.d(TAG, "Pictures successfully taken");
-        tvEventLog.append("\nPictures successfully taken");
     }
 }

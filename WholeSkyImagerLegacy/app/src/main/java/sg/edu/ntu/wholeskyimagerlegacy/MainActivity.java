@@ -40,13 +40,15 @@ public class MainActivity extends AppCompatActivity
     private Button stopButton = null;
     private final int REQUEST_CAMERA_PERMISSION = 200;
     private final int wahrsisModelNr = 6;
+    private HandlerThread mBackgroundThread = null;
+    private Handler mBackgroundHandler = null;
+    private Handler imagingHandler = null;
     private FrameLayout frameLayout = null;
     private TextView tvEventLog = null;
     private final String TAG = "WSIApp";
 
-    private boolean flagWaitForDelay = true;
-    private boolean flagRunImaging = false;
     private int pictureInterval = 1;
+    private int delayTime = 15;
 
     @Override
     protected void onCreate(Bundle savedInstanceState)
@@ -60,8 +62,6 @@ public class MainActivity extends AppCompatActivity
         initializeVariables();
 
         checkPermissions();
-
-        createAutoCapture();
     }
 
 //    protected void startBackgroundThread()
@@ -105,7 +105,7 @@ public class MainActivity extends AppCompatActivity
     {
         super.onResume();
         Log.d(TAG, "onResume");
-//        startBackgroundThread();
+        startBackgroundThread();
     }
 
     @Override
@@ -113,7 +113,7 @@ public class MainActivity extends AppCompatActivity
     {
         Log.d(TAG, "onPause");
         camera.closeCamera(frameLayout);
-//        stopBackgroundThread();
+        stopBackgroundThread();
         super.onPause();
     }
 
@@ -150,6 +150,27 @@ public class MainActivity extends AppCompatActivity
         return tvEventLog;
     }
 
+    private void startBackgroundThread()
+    {
+        mBackgroundThread = new HandlerThread("Camera Background");
+        mBackgroundThread.start();
+        mBackgroundHandler = new Handler(mBackgroundThread.getLooper());
+    }
+
+    private void stopBackgroundThread()
+    {
+        mBackgroundThread.quitSafely();
+        try
+        {
+            mBackgroundThread.join();
+            mBackgroundThread = null;
+            mBackgroundHandler = null;
+        } catch (InterruptedException e)
+        {
+            e.printStackTrace();
+        }
+    }
+
     private void initializeVariables()
     {
         frameLayout = (FrameLayout) findViewById(R.id.camera_preview);
@@ -178,7 +199,8 @@ public class MainActivity extends AppCompatActivity
                     camera.openCamera(frameLayout);
                     runButton.setText(getResources().getString(R.string.captureButton_text));
                     v.setTag(1);
-                    flagRunImaging = true;
+
+                    beginImaging();
                 } else
                 {
                     camera.takePicture();
@@ -197,12 +219,14 @@ public class MainActivity extends AppCompatActivity
 
                 if(status == 1)
                 {
+                    mBackgroundHandler.removeCallbacks(imagingRunnable);
+
+                    Log.d(TAG, "Imaging Stopped");
+                    tvEventLog.append("\nImaging Stopped");
+
                     camera.closeCamera(frameLayout);
                     runButton.setTag(0);
                     runButton.setText(getResources().getString(R.string.runButton_text));
-
-                    flagRunImaging = false;
-                    flagWaitForDelay = true;
                 }
             }
         });
@@ -219,57 +243,38 @@ public class MainActivity extends AppCompatActivity
         }
     }
 
-    private void createAutoCapture()
+    private void beginImaging()
     {
-        final Handler handler = new Handler();
-        final Runnable runnable = new Runnable()
-        {
-            @Override
-            public void run()
-            {
-                try
-                {
-                    if (flagWaitForDelay)
-                    {
-                        Date d = new Date();
-                        d.getTime();
-                        int seconds = d.getSeconds();
-                        Log.d(TAG, "seconds: " + seconds);
-                        if (seconds == 0 && flagRunImaging)
-                        {
-                            flagWaitForDelay = false;
-                        }
-                    }
+        imagingHandler = new Handler();
 
-                    if (!flagWaitForDelay && flagRunImaging)
-                    {
-                        Date d = new Date();
-                        CharSequence dateTime = DateFormat.format("yyyy-MM-dd hh:mm:ss", d.getTime());
-                        Log.d(TAG, "Runnable execution started. Time: " + dateTime + ". Interval: " + pictureInterval + " min.");
-                        tvEventLog.append("\nRunnable execution started. Time: " + dateTime + ". Interval: " + pictureInterval + " min.");
-                        camera.runImagingTask();
-                    }
-                } catch (Exception e)
-                {
-                    // TODO: handle exception
-                    Log.e(TAG, "Error: Runnable exception.");
-                } finally
-                {
-                    //also call the same runnable to call it at regular interval
-                }
+        imagingHandler.postDelayed(imagingRunnable, delayTime * 1000);
 
-                if (!flagWaitForDelay && flagRunImaging)
-                {
-                    handler.postDelayed(this, pictureInterval * 60 * 1000);
-                }
-
-                else if (flagWaitForDelay)
-                {
-                    //wait until full minute (eg. 12:16:00) before capturing images.
-                    handler.postDelayed(this, 1000);
-                }
-            }
-        };
-        handler.post(runnable);
+        Log.d(TAG, "Imaging will begin in " + delayTime + " seconds");
+        tvEventLog.append("\nImaging will begin in " + delayTime + " seconds");
     }
+
+    private final Runnable imagingRunnable = new Runnable()
+    {
+        @Override
+        public void run()
+        {
+            try
+            {
+                Date d = new Date();
+                CharSequence dateTime = DateFormat.format("yyyy-MM-dd hh:mm:ss", d.getTime());
+                Log.d(TAG, "Runnable execution started. Time: " + dateTime + ". Interval: " + pictureInterval + " min");
+                tvEventLog.append("\nRunnable execution started. Time: " + dateTime + ". Interval: " + pictureInterval + " min");
+                camera.runImagingTask();
+            } catch (Exception e)
+            {
+                // TODO: handle exception
+                Log.e(TAG, "Error: Runnable exception");
+                tvEventLog.append("\nError: Runnable exception");
+            } finally
+            {
+                //also call the same runnable to call it at regular interval
+            }
+            imagingHandler.postDelayed(this, pictureInterval * 60 * 1000);
+        }
+    };
 }

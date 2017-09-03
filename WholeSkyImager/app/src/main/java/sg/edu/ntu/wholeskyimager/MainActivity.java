@@ -31,6 +31,7 @@ import android.widget.Button;
 import android.util.Log;
 
 import java.util.Date;
+import java.util.concurrent.RunnableFuture;
 
 public class MainActivity extends AppCompatActivity
 {
@@ -41,12 +42,12 @@ public class MainActivity extends AppCompatActivity
     private final int wahrsisModelNr = 6;
     private HandlerThread mBackgroundThread = null;
     private Handler mBackgroundHandler = null;
+    private Handler imagingHandler = null;
     private FrameLayout frameLayout = null;
     private TextView tvEventLog = null;
     private final String TAG = "WSIApp";
 
-    private boolean flagWaitForDelay = true;
-    private boolean flagRunImaging = false;
+    private int delayTime = 5;
     private int pictureInterval = 1;
 
     @Override
@@ -61,8 +62,6 @@ public class MainActivity extends AppCompatActivity
         initialize();
 
         checkPermissions();
-
-        createAutoCapture();
     }
 
     @Override
@@ -73,7 +72,7 @@ public class MainActivity extends AppCompatActivity
             if (grantResults[0] == PackageManager.PERMISSION_DENIED)
             {
                 // close the app
-                Toast.makeText(MainActivity.this, "Sorry!!!, you can't use this app without granting permission", Toast.LENGTH_LONG).show();
+                Toast.makeText(MainActivity.this, "Sorry, you can't use this app without granting permission", Toast.LENGTH_LONG).show();
                 finish();
             }
         }
@@ -176,7 +175,8 @@ public class MainActivity extends AppCompatActivity
                     camera.openCamera(frameLayout);
                     runButton.setText(getResources().getString(R.string.captureButton_text));
                     v.setTag(1);
-                    flagRunImaging = true;
+
+                    beginImaging();
                 } else
                 {
                     camera.takePicture();
@@ -194,14 +194,16 @@ public class MainActivity extends AppCompatActivity
             {
                 final int status = (Integer) runButton.getTag();
 
-                if(status == 1)
+                if (status == 1)
                 {
+                    imagingHandler.removeCallbacks(imagingRunnable);
+
+                    Log.d(TAG, "Imaging Stopped");
+                    tvEventLog.append("\nImaging Stopped");
+
                     camera.closeCamera(frameLayout);
                     runButton.setTag(0);
                     runButton.setText(getResources().getString(R.string.runButton_text));
-
-                    flagRunImaging = false;
-                    flagWaitForDelay = true;
                 }
             }
         });
@@ -218,57 +220,38 @@ public class MainActivity extends AppCompatActivity
         }
     }
 
-    private void createAutoCapture()
+    private void beginImaging()
     {
-        final Handler handler = new Handler();
-        final Runnable runnable = new Runnable()
-        {
-            @Override
-            public void run()
-            {
-                try
-                {
-                    if (flagWaitForDelay)
-                    {
-                        Date d = new Date();
-                        d.getTime();
-                        int seconds = d.getSeconds();
-                        Log.d(TAG, "seconds: " + seconds);
-                        if (seconds == 0 && flagRunImaging)
-                        {
-                            flagWaitForDelay = false;
-                        }
-                    }
+        imagingHandler = new Handler();
 
-                    if (!flagWaitForDelay && flagRunImaging)
-                    {
-                        Date d = new Date();
-                        CharSequence dateTime = DateFormat.format("yyyy-MM-dd hh:mm:ss", d.getTime());
-                        Log.d(TAG, "Runnable execution started. Time: " + dateTime + ". Interval: " + pictureInterval + " min.");
-                        tvEventLog.append("\nRunnable execution started. Time: " + dateTime + ". Interval: " + pictureInterval + " min.");
-                        camera.runImagingTask();
-                    }
-                } catch (Exception e)
-                {
-                    // TODO: handle exception
-                    Log.e(TAG, "Error: Runnable exception.");
-                } finally
-                {
-                    //also call the same runnable to call it at regular interval
-                }
+        imagingHandler.postDelayed(imagingRunnable, delayTime * 1000);
 
-                if (!flagWaitForDelay && flagRunImaging)
-                {
-                    handler.postDelayed(this, pictureInterval * 60 * 1000);
-                }
-
-                else if (flagWaitForDelay)
-                {
-                    //wait until full minute (eg. 12:16:00) before capturing images.
-                    handler.postDelayed(this, 1000);
-                }
-            }
-        };
-        handler.post(runnable);
+        Log.d(TAG, "Imaging will begin in " + delayTime + " seconds");
+        tvEventLog.append("\nImaging will begin in " + delayTime + " seconds");
     }
+
+    private final Runnable imagingRunnable = new Runnable()
+    {
+        @Override
+        public void run()
+        {
+            try
+            {
+                Date d = new Date();
+                CharSequence dateTime = DateFormat.format("yyyy-MM-dd hh:mm:ss", d.getTime());
+                Log.d(TAG, "Runnable execution started. Time: " + dateTime + ". Interval: " + pictureInterval + " min");
+                tvEventLog.append("\nRunnable execution started. Time: " + dateTime + ". Interval: " + pictureInterval + " min");
+                camera.runImagingTask();
+            } catch (Exception e)
+            {
+                // TODO: handle exception
+                Log.e(TAG, "Error: Runnable exception");
+                tvEventLog.append("\nError: Runnable exception");
+            } finally
+            {
+                //also call the same runnable to call it at regular interval
+            }
+            imagingHandler.postDelayed(this, pictureInterval * 60 * 1000);
+        }
+    };
 }
