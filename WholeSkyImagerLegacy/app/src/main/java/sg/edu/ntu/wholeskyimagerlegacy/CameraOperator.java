@@ -176,11 +176,11 @@ public class CameraOperator
         //check if Focus mode infinity is available and set it
         List<String> focusModes = params.getSupportedFocusModes();
 
-        if (focusModes.contains(Camera.Parameters.FOCUS_MODE_INFINITY))
-        {
-            params.setFocusMode(Camera.Parameters.FOCUS_MODE_INFINITY);
-        }
-
+//        if (focusModes.contains(Camera.Parameters.FOCUS_MODE_INFINITY))
+//        {
+//            params.setFocusMode(Camera.Parameters.FOCUS_MODE_INFINITY);
+//        }
+        params.setFocusMode(Camera.Parameters.FOCUS_MODE_CONTINUOUS_PICTURE);
         params.set("mode", "m");
         params.set("iso", "ISO100");
         params.setWhiteBalance(Camera.Parameters.WHITE_BALANCE_AUTO);
