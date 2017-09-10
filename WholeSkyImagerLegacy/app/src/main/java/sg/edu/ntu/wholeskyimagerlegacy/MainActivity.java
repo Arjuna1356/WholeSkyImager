@@ -1,12 +1,14 @@
 package sg.edu.ntu.wholeskyimagerlegacy;
 
 import android.Manifest;
+import android.content.Intent;
+import android.content.SharedPreferences;
 import android.content.pm.ActivityInfo;
 import android.content.pm.PackageManager;
 
 import android.graphics.drawable.ColorDrawable;
-import android.graphics.drawable.Drawable;
 import android.os.Build;
+import android.preference.PreferenceManager;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.content.ContextCompat;
 import android.support.v7.app.AppCompatActivity;
@@ -20,6 +22,8 @@ import android.support.v7.widget.Toolbar;
 import android.text.format.DateFormat;
 import android.text.method.ScrollingMovementMethod;
 
+import android.view.Menu;
+import android.view.MenuItem;
 import android.view.View;
 
 import android.view.Window;
@@ -35,20 +39,25 @@ import java.util.Date;
 
 public class MainActivity extends AppCompatActivity
 {
-    private CameraOperator camera = null;
-    private Button runButton = null;
-    private Button stopButton = null;
     private final int REQUEST_CAMERA_PERMISSION = 200;
-    private final int wahrsisModelNr = 6;
-    private HandlerThread mBackgroundThread = null;
-    private Handler mBackgroundHandler = null;
-    private Handler imagingHandler = null;
-    private FrameLayout frameLayout = null;
-    private TextView tvEventLog = null;
+    private int wahrsisModelNr = 6;
     private final String TAG = "WSIApp";
 
     private int pictureInterval = 1;
     private int delayTime = 15;
+    private boolean afEnabled = true;
+
+    private CameraOperator camera = null;
+    private SharedPreferences sharedPref = null;
+
+    private Button runButton = null;
+    private Button stopButton = null;
+    private FrameLayout frameLayout = null;
+    private TextView tvEventLog = null;
+    private TextView tvStatusInfo = null;
+
+    private HandlerThread mBackgroundThread = null;
+    private Handler mBackgroundHandler = null;
 
     @Override
     protected void onCreate(Bundle savedInstanceState)
@@ -62,29 +71,54 @@ public class MainActivity extends AppCompatActivity
         initializeVariables();
 
         checkPermissions();
+
+        // fetch and set settings
+        getWSISettings();
     }
 
-//    protected void startBackgroundThread()
-//    {
-//        mBackgroundThread = new HandlerThread("Camera Background");
-//        mBackgroundThread.start();
-//        mBackgroundHandler = new Handler(mBackgroundThread.getLooper());
-//    }
-//
-//    protected void stopBackgroundThread()
-//    {
-//        mBackgroundThread.quitSafely();
-//
-//        try
-//        {
-//            mBackgroundThread.join();
-//            mBackgroundThread = null;
-//            mBackgroundHandler = null;
-//        } catch (InterruptedException e)
-//        {
-//            e.printStackTrace();
-//        }
-//    }
+    @Override
+    public boolean onCreateOptionsMenu(Menu menu)
+    {
+        // Inflate the menu; this adds items to the action bar if it is present.
+        getMenuInflater().inflate(R.menu.menu, menu);
+
+        return true;
+    }
+
+    // get picture data (no writing)
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item)
+    {
+        // Handle action bar item clicks here. The action bar will
+        // automatically handle clicks on the Home/Up button, so long
+        // as you specify a parent activity in AndroidManifest.xml.
+        int id = item.getItemId();
+
+        switch (item.getItemId())
+        {
+            case R.id.action_settings:
+                Intent intentSettings = new Intent(this, SettingsActivity.class);
+                startActivity(intentSettings);
+                return true;
+
+            case R.id.action_refresh:
+                getWSISettings();
+//                checkNetworkStatus();
+                Toast.makeText(MainActivity.this, "Refreshed Settings", Toast.LENGTH_SHORT).show();
+                return true;
+
+            case R.id.action_help:
+                return true;
+
+            case R.id.action_about:
+                Intent intentAbout = new Intent(this, DisplayAboutActivity.class);
+                startActivity(intentAbout);
+                return true;
+
+            default:
+                return super.onOptionsItemSelected(item);
+        }
+    }
 
     @Override
     public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults)
@@ -112,7 +146,9 @@ public class MainActivity extends AppCompatActivity
     public void onPause()
     {
         Log.d(TAG, "onPause");
-        camera.closeCamera(frameLayout);
+
+        stopImaging();
+
         stopBackgroundThread();
         super.onPause();
     }
@@ -150,16 +186,21 @@ public class MainActivity extends AppCompatActivity
         return tvEventLog;
     }
 
+    public boolean getAFEnabled()
+    {
+        return afEnabled;
+    }
+
     private void startBackgroundThread()
     {
         mBackgroundThread = new HandlerThread("Camera Background");
         mBackgroundThread.start();
-        mBackgroundHandler = new Handler(mBackgroundThread.getLooper());
     }
 
     private void stopBackgroundThread()
     {
         mBackgroundThread.quitSafely();
+
         try
         {
             mBackgroundThread.join();
@@ -181,6 +222,9 @@ public class MainActivity extends AppCompatActivity
         Date d2 = new Date();
         CharSequence dateTime2 = DateFormat.format("HH:mm:ss", d2.getTime());
         tvEventLog.append("\nTime: " + dateTime2);
+
+        tvStatusInfo = (TextView) findViewById(R.id.tvStatusInfo);
+        tvStatusInfo.setText("idle");
 
         camera = new CameraOperator(this);
 
@@ -215,19 +259,7 @@ public class MainActivity extends AppCompatActivity
             @Override
             public void onClick(View v)
             {
-                final int status = (Integer) runButton.getTag();
-
-                if(status == 1)
-                {
-                    mBackgroundHandler.removeCallbacks(imagingRunnable);
-
-                    Log.d(TAG, "Imaging Stopped");
-                    tvEventLog.append("\nImaging Stopped");
-
-                    camera.closeCamera(frameLayout);
-                    runButton.setTag(0);
-                    runButton.setText(getResources().getString(R.string.runButton_text));
-                }
+                stopImaging();
             }
         });
     }
@@ -245,12 +277,67 @@ public class MainActivity extends AppCompatActivity
 
     private void beginImaging()
     {
-        imagingHandler = new Handler();
+        mBackgroundHandler = new Handler();
 
-        imagingHandler.postDelayed(imagingRunnable, delayTime * 1000);
+        mBackgroundHandler.postDelayed(imagingRunnable, delayTime * 1000);
 
         Log.d(TAG, "Imaging will begin in " + delayTime + " seconds");
         tvEventLog.append("\nImaging will begin in " + delayTime + " seconds");
+    }
+
+    private void stopImaging()
+    {
+        final int status = (Integer) runButton.getTag();
+
+        if (status == 1)
+        {
+            mBackgroundHandler.removeCallbacks(imagingRunnable);
+            mBackgroundHandler = null;
+
+            runButton.setTag(0);
+            runButton.setText(getResources().getString(R.string.runButton_text));
+
+            Log.d(TAG, "Imaging Stopped");
+            tvEventLog.append("\nImaging Stopped");
+
+            camera.closeCamera(frameLayout);
+        }
+    }
+
+    /**
+     * set up preferences
+     */
+    private void getWSISettings()
+    {
+        sharedPref = PreferenceManager.getDefaultSharedPreferences(this);
+
+        Log.d(TAG, "Model No. in pref xml: " + Integer.parseInt(sharedPref.getString("wahrsisNo", "0")));
+//        tvEventLog.append("\nModel No. in pref xml: " + Integer.parseInt(sharedPref.getString("wahrsisNo", "0")));
+        // Set wahrsis model number according to settings activity
+        if (Integer.parseInt(sharedPref.getString("wahrsisNo", "0")) != 0)
+        {
+            wahrsisModelNr = Integer.parseInt(sharedPref.getString("wahrsisNo", "404"));
+            Log.d(TAG, "Model No. set to: " + wahrsisModelNr);
+        }
+
+        pictureInterval = Integer.parseInt(sharedPref.getString("picInterval", "404"));
+        Log.d(TAG, "Picture interval: " + pictureInterval + " min.");
+
+        pictureInterval = Integer.parseInt(sharedPref.getString("picInterval", "404"));
+
+        delayTime = Integer.parseInt(sharedPref.getString("startDelay", "15"));
+
+        afEnabled = sharedPref.getBoolean("enableAF", true);
+//        tvEventLog.append("\nPicture interval: " + pictureInterval + " min.");
+//        flagWriteExif = sharedPref.getBoolean("extendedExif", false);
+//        Log.d(TAG, "Extended exif: " + flagWriteExif);
+//        tvEventLog.append("\nExtended exif: " + flagWriteExif);
+//        flagRealignImage = sharedPref.getBoolean("realignImage", false);
+//        Log.d(TAG, "Realign image: " + flagRealignImage);
+//        tvEventLog.append("\nRealign image: " + flagRealignImage);
+
+//        authorizationToken = sharedPref.getString("authorToken", "f26543bea24e3545a8ef9708dffd7ce5d35127e2");
+//        Log.d(TAG, "Authorization token: " + authorizationToken);
     }
 
     private final Runnable imagingRunnable = new Runnable()
@@ -274,7 +361,7 @@ public class MainActivity extends AppCompatActivity
             {
                 //also call the same runnable to call it at regular interval
             }
-            imagingHandler.postDelayed(this, pictureInterval * 60 * 1000);
+            mBackgroundHandler.postDelayed(this, pictureInterval * 60 * 1000);
         }
     };
 }

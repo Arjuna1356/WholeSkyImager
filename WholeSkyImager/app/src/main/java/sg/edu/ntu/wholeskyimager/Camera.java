@@ -19,8 +19,10 @@ import android.media.ImageReader;
 import android.os.Environment;
 import android.os.Handler;
 import android.support.annotation.NonNull;
+import android.support.annotation.Nullable;
 import android.util.Log;
 import android.util.Size;
+import android.util.SparseIntArray;
 import android.view.Surface;
 import android.view.TextureView;
 import android.widget.FrameLayout;
@@ -33,8 +35,10 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.nio.ByteBuffer;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Date;
 import java.util.List;
 
 /**
@@ -43,30 +47,38 @@ import java.util.List;
 
 public class Camera
 {
-    private String cameraId = null;
     protected CameraDevice cameraDevice = null;
     protected CameraCaptureSession cameraCaptureSessions = null;
     protected CaptureRequest.Builder captureRequestBuilder = null;
     private TextView tvEventLog = null;
     private final String TAG = this.getClass().getName();
+    private int wahrsisModelNr = -1;
 
     private Size imageDimension = null;
     private ImageReader imageReader = null;
-
     private TextureView textureView = null;
-
     private File file = null;
 
     private MainActivity mainActivity = null;
-
     private Handler mBackgroundHandler = null;
 
+    private boolean afEnabled = true;
     private float lensHyperFocal = 0.0f;
     private int isoVal = 100;
+    private int mSensorOrientation = 0;
+
+    private static final SparseIntArray ORIENTATIONS = new SparseIntArray();
+    static {
+        ORIENTATIONS.append(Surface.ROTATION_0, 90);
+        ORIENTATIONS.append(Surface.ROTATION_90, 0);
+        ORIENTATIONS.append(Surface.ROTATION_180, 270);
+        ORIENTATIONS.append(Surface.ROTATION_270, 180);
+    }
 
     public Camera(MainActivity activity)
     {
         this.mainActivity = activity;
+        this.wahrsisModelNr = mainActivity.getWahrsisModelNr();
         this.tvEventLog = mainActivity.getTvEventLog();
     }
 
@@ -78,6 +90,7 @@ public class Camera
     public void openCamera(FrameLayout frameLayout)
     {
         int REQUEST_CAMERA_PERMISSION = mainActivity.getRequestCameraPermission();
+        String cameraId;
 
         CameraManager manager = (CameraManager) mainActivity.getSystemService(Context.CAMERA_SERVICE);
 
@@ -88,6 +101,8 @@ public class Camera
             StreamConfigurationMap map = characteristics.get(CameraCharacteristics.SCALER_STREAM_CONFIGURATION_MAP);
             assert map != null;
             imageDimension = map.getOutputSizes(SurfaceTexture.class)[0];
+
+            mSensorOrientation = characteristics.get(CameraCharacteristics.SENSOR_ORIENTATION);
 
 //            lensHyperFocal = characteristics.get(CameraCharacteristics.LENS_INFO_MINIMUM_FOCUS_DISTANCE);
 
@@ -141,33 +156,7 @@ public class Camera
         //do something
         Log.d(TAG, "Taking Picture");
         tvEventLog.append("\nTaking Picture");
-        //check the current state before we display the screen
-//        params = camera.getParameters();
-//
-//        //max value: +12, step size: exposure-compensation-step=0.166667. EV: +2
-//        maxExposureComp = params.getMaxExposureCompensation();
-//        minExposureComp = params.getMinExposureCompensation();
-//
-//        timeStampNew = new SimpleDateFormat("yyyy-MM-dd-HH-mm-ss").format(new Date());
 
-//        if(timeStampOld != null && flagDeleteImages) {
-//            //TODO: delte all files
-//            if (flagDeleteImages) {
-//                String filePath = Environment.getExternalStorageDirectory().getPath() + "/WSI/";
-//                File imageFileLow = new File(filePath+timeStampOld+"-wahrsis" + wahrsisModelNr + "-low" + ".jpg");
-//                File imageFileMed = new File(filePath+timeStampOld+"-wahrsis" + wahrsisModelNr + "-med" + ".jpg");
-//                File imageFileHigh = new File(filePath+timeStampOld+"-wahrsis" + wahrsisModelNr + "-high" + ".jpg");
-//                imageFileLow.delete();
-//                imageFileMed.delete();
-//                boolean statusDelete = imageFileHigh.delete();
-//                Log.d(TAG, "Deleting successfull: " + statusDelete);
-//            }
-//        }
-
-//        params.set("mode", "m");
-//        params.set("iso", "ISO100");
-
-//        camera.stopPreview();
         takePicture();
         Log.d(TAG, "Pictures successfully taken");
         tvEventLog.append("\nPictures successfully taken");
@@ -204,13 +193,25 @@ public class Camera
             }
 
             ImageReader reader = ImageReader.newInstance(width, height, ImageFormat.JPEG, 1);
+
             List<Surface> outputSurfaces = new ArrayList<Surface>(2);
             outputSurfaces.add(reader.getSurface());
             outputSurfaces.add(new Surface(textureView.getSurfaceTexture()));
+
             final CaptureRequest.Builder captureBuilder = cameraDevice.createCaptureRequest(CameraDevice.TEMPLATE_STILL_CAPTURE);
             captureBuilder.addTarget(reader.getSurface());
             captureBuilder.set(CaptureRequest.CONTROL_MODE, CameraMetadata.CONTROL_MODE_AUTO);
-            final File file = new File(Environment.getExternalStorageDirectory() + "/pic.jpg");
+
+            int rotation = mainActivity.getWindowManager().getDefaultDisplay().getRotation();
+            captureBuilder.set(CaptureRequest.JPEG_ORIENTATION, getOrientation(rotation));
+
+            String timeStampNew = null;
+
+            timeStampNew = new SimpleDateFormat("yyyy-MM-dd-HH-mm-ss").format(new Date());
+
+            String fileName = timeStampNew + "-wahrsis" + wahrsisModelNr + "-" + "normal" + ".jpg";
+
+            final File file = getOutputMediaFile(fileName);
 
             ImageReader.OnImageAvailableListener readerListener = new ImageReader.OnImageAvailableListener()
             {
@@ -294,6 +295,46 @@ public class Camera
         {
             e.printStackTrace();
         }
+    }
+
+    @Nullable // this denotes that the method might legitimately return null
+    private static File getOutputMediaFile(String fileName)
+    {
+        // make a new file directory inside the "sdcard" folder
+        File mediaStorageDir = new File(Environment.getExternalStorageDirectory(), "WSI");
+
+        // if folder could not be created
+        if (!mediaStorageDir.exists())
+        {
+            if (!mediaStorageDir.mkdirs())
+            {
+                Log.d("WholeSkyImager", "failed to create directory");
+                return null;
+            }
+        }
+        //naming convention: YYYY-MM-DD-HH-MM-SS-wahrsisN.jpg eg. 2016-11-22-14-20-01-wahrsis5.jpg
+        //take the current timeStamp
+//        String timeStamp = new SimpleDateFormat("yyyy-MM-dd-HH-mm-ss").format(new Date());
+//        String complete = timeStamp.concat("-wahrsis" + wahrsisModelNr + ".jpg");
+//        File mediaFile;
+        //and make a media file:
+        File mediaFile = new File(mediaStorageDir.getPath() + File.separator + fileName);
+
+        return mediaFile;
+    }
+
+    /**
+     * Retrieves the JPEG orientation from the specified screen rotation.
+     *
+     * @param rotation The screen rotation.
+     * @return The JPEG orientation (one of 0, 90, 270, and 360)
+     */
+    private int getOrientation(int rotation) {
+        // Sensor orientation is 90 for most devices, or 270 for some devices (eg. Nexus 5X)
+        // We have to take that into account and rotate JPEG properly.
+        // For devices with orientation of 90, we simply return our mapping from ORIENTATIONS.
+        // For devices with orientation of 270, we need to rotate the JPEG 180 degrees.
+        return (ORIENTATIONS.get(rotation) + mSensorOrientation + 270) % 360;
     }
 
     TextureView.SurfaceTextureListener textureListener = new TextureView.SurfaceTextureListener()
@@ -393,11 +434,19 @@ public class Camera
                 }
             }, null);
 
-            captureRequestBuilder.set(CaptureRequest.CONTROL_MODE, CameraMetadata.CONTROL_MODE_AUTO);
-//            captureRequestBuilder.set(CaptureRequest.CONTROL_AF_MODE, CameraMetadata.CONTROL_AF_MODE_OFF);
-//            captureRequestBuilder.set(CaptureRequest.CONTROL_AE_MODE, CameraMetadata.CONTROL_AE_MODE_OFF);
-//            captureRequestBuilder.set(CaptureRequest.LENS_FOCUS_DISTANCE, lensHyperFocal);
-//            captureRequestBuilder.set(CaptureRequest.SENSOR_SENSITIVITY, isoVal);
+            afEnabled = mainActivity.getAFEnabled();
+
+            if(afEnabled)
+            {
+                captureRequestBuilder.set(CaptureRequest.CONTROL_MODE, CameraMetadata.CONTROL_MODE_AUTO);
+            }
+            else
+            {
+                captureRequestBuilder.set(CaptureRequest.CONTROL_AF_MODE, CameraMetadata.CONTROL_AF_MODE_OFF);
+                captureRequestBuilder.set(CaptureRequest.CONTROL_AE_MODE, CameraMetadata.CONTROL_AE_MODE_OFF);
+                captureRequestBuilder.set(CaptureRequest.LENS_FOCUS_DISTANCE, lensHyperFocal);
+                captureRequestBuilder.set(CaptureRequest.SENSOR_SENSITIVITY, isoVal);
+            }
         } catch (CameraAccessException e)
         {
             Log.e(TAG, "Error creating preview");

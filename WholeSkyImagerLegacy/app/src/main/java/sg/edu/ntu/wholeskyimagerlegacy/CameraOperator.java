@@ -39,6 +39,7 @@ public class CameraOperator
     private ImageSurfaceView mImageSurfaceView = null;
     private int wahrsisModelNr = -1;
     private TextView tvEventLog = null;
+    private boolean afEnabled = true;
     private final String TAG = this.getClass().getName();
 
     private Camera.Parameters params = null;
@@ -145,6 +146,8 @@ public class CameraOperator
 
             assert mCamera != null;
 
+            afEnabled = mainActivity.getAFEnabled();
+
             setCameraParameters(mCamera);
         } catch (Exception e)
         {
@@ -176,11 +179,18 @@ public class CameraOperator
         //check if Focus mode infinity is available and set it
         List<String> focusModes = params.getSupportedFocusModes();
 
-//        if (focusModes.contains(Camera.Parameters.FOCUS_MODE_INFINITY))
-//        {
-//            params.setFocusMode(Camera.Parameters.FOCUS_MODE_INFINITY);
-//        }
-        params.setFocusMode(Camera.Parameters.FOCUS_MODE_CONTINUOUS_PICTURE);
+        if(afEnabled)
+        {
+            params.setFocusMode(Camera.Parameters.FOCUS_MODE_CONTINUOUS_PICTURE);
+        }
+        else
+        {
+            if (focusModes.contains(Camera.Parameters.FOCUS_MODE_INFINITY))
+            {
+                params.setFocusMode(Camera.Parameters.FOCUS_MODE_INFINITY);
+            }
+        }
+
         params.set("mode", "m");
         params.set("iso", "ISO100");
         params.setWhiteBalance(Camera.Parameters.WHITE_BALANCE_AUTO);
@@ -215,11 +225,8 @@ public class CameraOperator
 //            String ending = "temp";
             Log.d(TAG, "evState: " + "normal");
             String fileName = timeStampNew + "-wahrsis" + wahrsisModelNr + "-" + "normal" + ".jpg";
-            String fileNameRotated = timeStampNew + "-wahrsis" + wahrsisModelNr + "-" + "normal" + "-rotated" + ".jpg";
 
             File pictureFile = getOutputMediaFile(fileName);
-            File pictureFileRotated = getOutputMediaFile(fileNameRotated);
-            String filePath = Environment.getExternalStorageDirectory().getPath() + "/WSI/";
 
             if (pictureFile == null)
             {
@@ -251,7 +258,7 @@ public class CameraOperator
     private static File getOutputMediaFile(String fileName)
     {
         // make a new file directory inside the "sdcard" folder
-        File mediaStorageDir = new File("/sdcard/", "WSI");
+        File mediaStorageDir = new File(Environment.getExternalStorageDirectory(), "WSI");
 
         // if folder could not be created
         if (!mediaStorageDir.exists())
@@ -266,9 +273,9 @@ public class CameraOperator
         //take the current timeStamp
 //        String timeStamp = new SimpleDateFormat("yyyy-MM-dd-HH-mm-ss").format(new Date());
 //        String complete = timeStamp.concat("-wahrsis" + wahrsisModelNr + ".jpg");
-        File mediaFile;
+//        File mediaFile;
         //and make a media file:
-        mediaFile = new File(mediaStorageDir.getPath() + File.separator + fileName);
+        File mediaFile = new File(mediaStorageDir.getPath() + File.separator + fileName);
 
         return mediaFile;
     }
