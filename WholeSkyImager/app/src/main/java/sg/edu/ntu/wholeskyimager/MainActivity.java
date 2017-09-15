@@ -72,6 +72,8 @@ public class MainActivity extends AppCompatActivity
         initialize();
 
         checkPermissions();
+
+        getWSISettings();
     }
 
     @Override
@@ -240,6 +242,8 @@ public class MainActivity extends AppCompatActivity
 
                 if (status == 0)
                 {
+                    getWSISettings();
+
                     camera.openCamera(frameLayout);
                     runButton.setText(getResources().getString(R.string.captureButton_text));
                     v.setTag(1);

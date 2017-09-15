@@ -182,12 +182,14 @@ public class CameraOperator
         if(afEnabled)
         {
             params.setFocusMode(Camera.Parameters.FOCUS_MODE_CONTINUOUS_PICTURE);
+            tvEventLog.append("\nPreviewing AF");
         }
         else
         {
             if (focusModes.contains(Camera.Parameters.FOCUS_MODE_INFINITY))
             {
                 params.setFocusMode(Camera.Parameters.FOCUS_MODE_INFINITY);
+                tvEventLog.append("\nPreviewing Manual");
             }
         }
 

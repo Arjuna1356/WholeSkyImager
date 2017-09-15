@@ -200,7 +200,18 @@ public class Camera
 
             final CaptureRequest.Builder captureBuilder = cameraDevice.createCaptureRequest(CameraDevice.TEMPLATE_STILL_CAPTURE);
             captureBuilder.addTarget(reader.getSurface());
-            captureBuilder.set(CaptureRequest.CONTROL_MODE, CameraMetadata.CONTROL_MODE_AUTO);
+
+            if(afEnabled)
+            {
+                captureBuilder.set(CaptureRequest.CONTROL_MODE, CameraMetadata.CONTROL_MODE_AUTO);
+            }
+            else
+            {
+                captureBuilder.set(CaptureRequest.CONTROL_AF_MODE, CameraMetadata.CONTROL_AF_MODE_OFF);
+                captureBuilder.set(CaptureRequest.CONTROL_AE_MODE, CameraMetadata.CONTROL_AE_MODE_OFF);
+                captureBuilder.set(CaptureRequest.LENS_FOCUS_DISTANCE, lensHyperFocal);
+                captureBuilder.set(CaptureRequest.SENSOR_SENSITIVITY, isoVal);
+            }
 
             int rotation = mainActivity.getWindowManager().getDefaultDisplay().getRotation();
             captureBuilder.set(CaptureRequest.JPEG_ORIENTATION, getOrientation(rotation));
@@ -439,6 +450,7 @@ public class Camera
             if(afEnabled)
             {
                 captureRequestBuilder.set(CaptureRequest.CONTROL_MODE, CameraMetadata.CONTROL_MODE_AUTO);
+                tvEventLog.append("\nPreviewing AF");
             }
             else
             {
@@ -446,6 +458,7 @@ public class Camera
                 captureRequestBuilder.set(CaptureRequest.CONTROL_AE_MODE, CameraMetadata.CONTROL_AE_MODE_OFF);
                 captureRequestBuilder.set(CaptureRequest.LENS_FOCUS_DISTANCE, lensHyperFocal);
                 captureRequestBuilder.set(CaptureRequest.SENSOR_SENSITIVITY, isoVal);
+                tvEventLog.append("\nPreviewing Manual");
             }
         } catch (CameraAccessException e)
         {
