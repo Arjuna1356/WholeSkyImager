@@ -62,8 +62,9 @@ public class Camera
     private MainActivity mainActivity = null;
     private Handler mBackgroundHandler = null;
 
+    private CameraCharacteristics characteristics = null;
     private boolean afEnabled = true;
-    private float lensHyperFocal = 0.0f;
+    private float minimumFocusDist = 0.0f;
     private int isoVal = 100;
     private int mSensorOrientation = 0;
 
@@ -97,14 +98,14 @@ public class Camera
         try
         {
             cameraId = manager.getCameraIdList()[0];
-            CameraCharacteristics characteristics = manager.getCameraCharacteristics(cameraId);
+            characteristics = manager.getCameraCharacteristics(cameraId);
             StreamConfigurationMap map = characteristics.get(CameraCharacteristics.SCALER_STREAM_CONFIGURATION_MAP);
             assert map != null;
             imageDimension = map.getOutputSizes(SurfaceTexture.class)[0];
 
             mSensorOrientation = characteristics.get(CameraCharacteristics.SENSOR_ORIENTATION);
 
-//            lensHyperFocal = characteristics.get(CameraCharacteristics.LENS_INFO_MINIMUM_FOCUS_DISTANCE);
+//            minimumFocusDist = characteristics.get(CameraCharacteristics.LENS_INFO_MINIMUM_FOCUS_DISTANCE);
 
             // Add permission for camera and let user grant the permission
             if (mainActivity.checkSelfPermission(Manifest.permission.CAMERA) == PackageManager.PERMISSION_GRANTED &&
@@ -186,7 +187,7 @@ public class Camera
             int width = 640;
             int height = 480;
 
-            if (jpegSizes != null && 0 < jpegSizes.length)
+            if ((jpegSizes != null) && (jpegSizes.length > 0))
             {
                 width = jpegSizes[0].getWidth();
                 height = jpegSizes[0].getHeight();
@@ -199,6 +200,7 @@ public class Camera
             outputSurfaces.add(new Surface(textureView.getSurfaceTexture()));
 
             final CaptureRequest.Builder captureBuilder = cameraDevice.createCaptureRequest(CameraDevice.TEMPLATE_STILL_CAPTURE);
+            captureBuilder.set(CaptureRequest.CONTROL_CAPTURE_INTENT, CaptureRequest.CONTROL_CAPTURE_INTENT_STILL_CAPTURE);
             captureBuilder.addTarget(reader.getSurface());
 
             if(afEnabled)
@@ -208,10 +210,13 @@ public class Camera
             else
             {
                 captureBuilder.set(CaptureRequest.CONTROL_AF_MODE, CameraMetadata.CONTROL_AF_MODE_OFF);
+                captureBuilder.set(CaptureRequest.LENS_FOCUS_DISTANCE, minimumFocusDist);
                 captureBuilder.set(CaptureRequest.CONTROL_AE_MODE, CameraMetadata.CONTROL_AE_MODE_OFF);
-                captureBuilder.set(CaptureRequest.LENS_FOCUS_DISTANCE, lensHyperFocal);
                 captureBuilder.set(CaptureRequest.SENSOR_SENSITIVITY, isoVal);
             }
+
+            captureBuilder.set(CaptureRequest.FLASH_MODE, CaptureRequest.FLASH_MODE_OFF);
+            captureBuilder.set(CaptureRequest.JPEG_QUALITY, (byte) 100);
 
             int rotation = mainActivity.getWindowManager().getDefaultDisplay().getRotation();
             captureBuilder.set(CaptureRequest.JPEG_ORIENTATION, getOrientation(rotation));
@@ -445,6 +450,16 @@ public class Camera
                 }
             }, null);
 
+            Float minimum_focus_distance = characteristics.get(CameraCharacteristics.LENS_INFO_MINIMUM_FOCUS_DISTANCE); // may be null on some devices
+            if( minimum_focus_distance != null )
+            {
+                minimumFocusDist = minimum_focus_distance;
+            }
+            else
+            {
+                minimumFocusDist = 0.0f;
+            }
+
             afEnabled = mainActivity.getAFEnabled();
 
             if(afEnabled)
@@ -455,9 +470,9 @@ public class Camera
             else
             {
                 captureRequestBuilder.set(CaptureRequest.CONTROL_AF_MODE, CameraMetadata.CONTROL_AF_MODE_OFF);
-                captureRequestBuilder.set(CaptureRequest.CONTROL_AE_MODE, CameraMetadata.CONTROL_AE_MODE_OFF);
-                captureRequestBuilder.set(CaptureRequest.LENS_FOCUS_DISTANCE, lensHyperFocal);
-                captureRequestBuilder.set(CaptureRequest.SENSOR_SENSITIVITY, isoVal);
+                captureRequestBuilder.set(CaptureRequest.LENS_FOCUS_DISTANCE, minimumFocusDist);
+//                captureRequestBuilder.set(CaptureRequest.CONTROL_AE_MODE, CameraMetadata.CONTROL_AE_MODE_OFF);
+//                captureRequestBuilder.set(CaptureRequest.SENSOR_SENSITIVITY, isoVal);
                 tvEventLog.append("\nPreviewing Manual");
             }
         } catch (CameraAccessException e)

@@ -32,6 +32,7 @@ import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 
+@SuppressWarnings("deprecation")
 public class CameraOperator
 {
     private Camera camera = null;
@@ -181,8 +182,11 @@ public class CameraOperator
 
         if(afEnabled)
         {
-            params.setFocusMode(Camera.Parameters.FOCUS_MODE_CONTINUOUS_PICTURE);
-            tvEventLog.append("\nPreviewing AF");
+            if (focusModes.contains(Camera.Parameters.FOCUS_MODE_CONTINUOUS_PICTURE))
+            {
+                params.setFocusMode(Camera.Parameters.FOCUS_MODE_CONTINUOUS_PICTURE);
+                tvEventLog.append("\nPreviewing AF");
+            }
         }
         else
         {
