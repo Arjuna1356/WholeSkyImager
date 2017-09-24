@@ -1,5 +1,15 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
+    <string-array name="sceneArray">
+        <item>Normal</item>
+        <item>DRO</item>
+        <item>HDR</item>
+    </string-array>
+    <string-array name="sceneValues">
+        <item>preference_photo_mode_std</item>
+        <item>preference_photo_mode_dro</item>
+        <item>preference_photo_mode_hdr</item>
+    </string-array>
     <string-array name="flash_icons">
         <item>drawable/flash_off</item>
         <item>drawable/flash_auto</item>

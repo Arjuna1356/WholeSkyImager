@@ -3,7 +3,6 @@ package sg.edu.ntu.wholeskyimagerex;
 import android.os.Build;
 import android.os.Bundle;
 import android.preference.PreferenceActivity;
-import android.preference.PreferenceFragment;
 import android.support.v4.content.ContextCompat;
 import android.support.v7.widget.Toolbar;
 import android.view.LayoutInflater;
@@ -23,12 +22,9 @@ public class SettingsActivity extends PreferenceActivity
     public void onCreate(Bundle savedInstanceState)
     {
         super.onCreate(savedInstanceState);
-//        PreferenceManager.setDefaultValues(getActivity(), R.xml.settings, false);
 
         // Load the preferences from an XML resource
         addPreferencesFromResource(R.xml.settings);
-
-//        getFragmentManager().beginTransaction().replace(android.R.id.content, new MyPreferenceFragment()).commit();
     }
 
     @Override
@@ -62,21 +58,5 @@ public class SettingsActivity extends PreferenceActivity
     {
         getMenuInflater().inflate(R.menu.menu, menu);
         return true;
-    }
-
-    /**
-     * This fragment shows the preferences for the first header
-     */
-    public static class MyPreferenceFragment extends PreferenceFragment
-    {
-        @Override
-        public void onCreate(final Bundle savedInstanceState)
-        {
-            super.onCreate(savedInstanceState);
-            // Make sure default values are applied.
-//            PreferenceManager.setDefaultValues(getActivity(),R.xml.settings, false);
-            // Load the preferences from a XML Resource
-            addPreferencesFromResource(R.xml.settings);
-        }
     }
 }

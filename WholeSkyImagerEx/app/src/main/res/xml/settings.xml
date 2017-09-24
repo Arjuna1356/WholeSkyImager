@@ -29,11 +29,13 @@
             android:key="enableAF"
             android:summary="Enable autofocus for imaging."
             android:title="Enable Autofocus"/>
-        <!--<SwitchPreference-->
-            <!--android:defaultValue="false"-->
-            <!--android:key="createHDR"-->
-            <!--android:summary="Enable for HDR image creation on this phone."-->
-            <!--android:title="Create HDR Image"/>-->
+        <ListPreference
+            android:title="Use DRO or HDR?"
+            android:summary="Try to enhance images"
+            android:key="scenePref"
+            android:entries="@array/sceneArray"
+            android:entryValues="@array/sceneValues"
+            android:defaultValue="preference_photo_mode_std"/>
         <!--<SwitchPreference-->
             <!--android:defaultValue="false"-->
             <!--android:key="createRAW"-->

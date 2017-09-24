@@ -95,8 +95,6 @@ public class ImageSaver extends Thread
 		final String preference_stamp_gpsformat;
 		final boolean store_location;
 		final Location location;
-		final boolean store_geo_direction;
-		final double geo_direction;
 		int sample_factor = 1; // sampling factor for thumbnail, higher means lower quality
 
 		Request(Type type,
@@ -108,7 +106,7 @@ public class ImageSaver extends Thread
                 boolean using_camera2, int image_quality,
                 Date current_date,
                 String preference_stamp, String preference_textstamp, int font_size, int color, String pref_style, String preference_stamp_dateformat, String preference_stamp_timeformat, String preference_stamp_gpsformat,
-                boolean store_location, Location location, boolean store_geo_direction, double geo_direction,
+                boolean store_location, Location location,
                 int sample_factor) {
 			this.type = type;
 			this.is_hdr = is_hdr;
@@ -131,8 +129,6 @@ public class ImageSaver extends Thread
 			this.preference_stamp_gpsformat = preference_stamp_gpsformat;
 			this.store_location = store_location;
 			this.location = location;
-			this.store_geo_direction = store_geo_direction;
-			this.geo_direction = geo_direction;
 			this.sample_factor = sample_factor;
 		}
 	}
@@ -222,7 +218,7 @@ public class ImageSaver extends Thread
                           boolean using_camera2, int image_quality,
                           Date current_date,
                           String preference_stamp, String preference_textstamp, int font_size, int color, String pref_style, String preference_stamp_dateformat, String preference_stamp_timeformat, String preference_stamp_gpsformat,
-                          boolean store_location, Location location, boolean store_geo_direction, double geo_direction,
+                          boolean store_location, Location location,
                           int sample_factor) {
 		if( MyDebug.LOG ) {
 			Log.d(TAG, "saveImageJpeg");
@@ -238,7 +234,7 @@ public class ImageSaver extends Thread
 				using_camera2, image_quality,
 				current_date,
 				preference_stamp, preference_textstamp, font_size, color, pref_style, preference_stamp_dateformat, preference_stamp_timeformat, preference_stamp_gpsformat,
-				store_location, location, store_geo_direction, geo_direction,
+				store_location, location,
 				sample_factor);
 	}
 
@@ -253,7 +249,7 @@ public class ImageSaver extends Thread
                               boolean using_camera2, int image_quality,
                               Date current_date,
                               String preference_stamp, String preference_textstamp, int font_size, int color, String pref_style, String preference_stamp_dateformat, String preference_stamp_timeformat, String preference_stamp_gpsformat,
-                              boolean store_location, Location location, boolean store_geo_direction, double geo_direction,
+                              boolean store_location, Location location,
                               int sample_factor) {
 		if( MyDebug.LOG ) {
 			Log.d(TAG, "saveImage");
@@ -272,7 +268,7 @@ public class ImageSaver extends Thread
 				using_camera2, image_quality,
 				current_date,
 				preference_stamp, preference_textstamp, font_size, color, pref_style, preference_stamp_dateformat, preference_stamp_timeformat, preference_stamp_gpsformat,
-				store_location, location, store_geo_direction, geo_direction,
+				store_location, location,
 				sample_factor);
 
 		if( do_in_background ) {
@@ -293,7 +289,7 @@ public class ImageSaver extends Thread
 					false, 0,
 					null,
 					null, null, 0, 0, null, null, null, null,
-					false, null, false, 0.0,
+					false, null,
 					1);
 				if( MyDebug.LOG )
 					Log.d(TAG, "add dummy request");
@@ -741,7 +737,7 @@ public class ImageSaver extends Thread
 						applicationInterface.drawTextWithBackground(canvas, p, datetime_stamp, color, Color.BLACK, width - offset_x, ypos, MyApplicationInterface.Alignment.ALIGNMENT_BOTTOM, null, draw_shadowed);
 					}
 					ypos -= diff_y;
-					String gps_stamp = main_activity.getTextFormatter().getGPSString(preference_stamp_gpsformat, request.store_location, request.location, request.store_geo_direction, request.geo_direction);
+					String gps_stamp = main_activity.getTextFormatter().getGPSString(preference_stamp_gpsformat, request.store_location, request.location);
 					if( gps_stamp.length() > 0 ) {
 						if( MyDebug.LOG )
 							Log.d(TAG, "stamp with location_string: " + gps_stamp);
@@ -793,7 +789,6 @@ public class ImageSaver extends Thread
 		final boolean using_camera2 = request.using_camera2;
 		final Date current_date = request.current_date;
 		final boolean store_location = request.store_location;
-		final boolean store_geo_direction = request.store_geo_direction;
 
         boolean success = false;
 		final MyApplicationInterface applicationInterface = main_activity.getApplicationInterface();
@@ -979,24 +974,6 @@ public class ImageSaver extends Thread
 									Log.d(TAG, "can't set Exif tags without file pre-Android 7");
 							}
 						}
-	            	}
-	            	else if( store_geo_direction ) {
-    	            	if( MyDebug.LOG )
-        	    			Log.d(TAG, "add GPS direction exif info");
-    	            	try {
-	    	            	ExifInterface exif = new ExifInterface(picFile.getAbsolutePath());
-							modifyExif(exif, using_camera2, current_date, store_location, store_geo_direction, request.geo_direction);
-	    	            	exif.saveAttributes();
-    	            	}
-    		    		catch(NoClassDefFoundError exception) {
-    		    			// have had Google Play crashes from new ExifInterface() elsewhere for Galaxy Ace4 (vivalto3g), Galaxy S Duos3 (vivalto3gvn), so also catch here just in case
-    		    			if( MyDebug.LOG )
-    		    				Log.e(TAG, "exif orientation NoClassDefFoundError");
-    		    			exception.printStackTrace();
-    		    		}
-    	        		if( MyDebug.LOG ) {
-    	        			Log.d(TAG, "Save single image performance: time after adding GPS direction exif info: " + (System.currentTimeMillis() - time_s));
-    	        		}
 	            	}
 	            	else if( needGPSTimestampHack(using_camera2, store_location) ) {
     	            	if( MyDebug.LOG )
@@ -1493,7 +1470,7 @@ public class ImageSaver extends Thread
 					exif_new.setAttribute(ExifInterface.TAG_USER_COMMENT, exif_user_comment);
 			}
 
-			modifyExif(exif_new, request.using_camera2, request.current_date, request.store_location, request.store_geo_direction, request.geo_direction);
+			modifyExif(exif_new, request.using_camera2, request.current_date, request.store_location);
 			exif_new.saveAttributes();
 	}
 
@@ -1599,29 +1576,11 @@ public class ImageSaver extends Thread
 
 	/** Makes various modifications to the exif data, if necessary.
 	 */
-    private void modifyExif(ExifInterface exif, boolean using_camera2, Date current_date, boolean store_location, boolean store_geo_direction, double geo_direction) {
-		setGPSDirectionExif(exif, store_geo_direction, geo_direction);
+    private void modifyExif(ExifInterface exif, boolean using_camera2, Date current_date, boolean store_location) {
 		setDateTimeExif(exif);
 		if( needGPSTimestampHack(using_camera2, store_location) ) {
 			fixGPSTimestamp(exif, current_date);
 		}
-	}
-
-	private void setGPSDirectionExif(ExifInterface exif, boolean store_geo_direction, double geo_direction) {
-    	if( store_geo_direction ) {
-			float geo_angle = (float) Math.toDegrees(geo_direction);
-			if( geo_angle < 0.0f ) {
-				geo_angle += 360.0f;
-			}
-			if( MyDebug.LOG )
-				Log.d(TAG, "save geo_angle: " + geo_angle);
-			// see http://www.sno.phy.queensu.ca/~phil/exiftool/TagNames/GPS.html
-			String GPSImgDirection_string = Math.round(geo_angle*100) + "/100";
-			if( MyDebug.LOG )
-				Log.d(TAG, "GPSImgDirection_string: " + GPSImgDirection_string);
-		   	exif.setAttribute(TAG_GPS_IMG_DIRECTION, GPSImgDirection_string);
-		   	exif.setAttribute(TAG_GPS_IMG_DIRECTION_REF, "M");
-    	}
 	}
 
 	private void setDateTimeExif(ExifInterface exif) {

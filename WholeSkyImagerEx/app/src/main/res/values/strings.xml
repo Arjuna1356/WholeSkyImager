@@ -1,5 +1,5 @@
 <resources>
-    <string name="app_name">WholeSkyImager</string>
+    <string name="app_name">WholeSkyImagerEx</string>
     <string name="main_label">Camera Test</string>
     <string name="runButton_text">Run</string>
     <string name="captureButton_text">Capture</string>
@@ -11,88 +11,9 @@
 
     <!-- Strings related to Settings -->
 
-    <!-- Example General settings -->
-    <string name="pref_header_general">General</string>
-
-    <string name="pref_title_social_recommendations">Enable social recommendations</string>
-    <string name="pref_description_social_recommendations">Recommendations for people to contact
-        based on your message history
-    </string>
-
-    <string name="pref_title_display_name">Display name</string>
-    <string name="pref_default_display_name">John Smith</string>
-
-    <string name="pref_title_add_friends_to_messages">Add friends to messages</string>
-    <string-array name="pref_example_list_titles">
-        <item>Always</item>
-        <item>When possible</item>
-        <item>Never</item>
-    </string-array>
-    <string-array name="pref_example_list_values">
-        <item>1</item>
-        <item>0</item>
-        <item>-1</item>
-    </string-array>
-
-    <!-- Example settings for Data & Sync -->
-    <string name="pref_header_data_sync">Data &amp; sync</string>
-
-    <string name="pref_title_sync_frequency">Sync frequency</string>
-    <string-array name="pref_sync_frequency_titles">
-        <item>15 minutes</item>
-        <item>30 minutes</item>
-        <item>1 hour</item>
-        <item>3 hours</item>
-        <item>6 hours</item>
-        <item>Never</item>
-    </string-array>
-    <string-array name="pref_sync_frequency_values">
-        <item>15</item>
-        <item>30</item>
-        <item>60</item>
-        <item>180</item>
-        <item>360</item>
-        <item>-1</item>
-    </string-array>
-
-    <string-array name="list_preference_entries">
-        <item>Entry 1</item>
-        <item>Entry 2</item>
-        <item>Entry 3</item>
-    </string-array>
-
-    <string-array name="list_preference_entry_values">
-        <item>1</item>
-        <item>2</item>
-        <item>3</item>
-    </string-array>
-
     <string-array name="multi_select_list_preference_default_value" />
 
     <string name="pref_title_system_sync_settings">System sync settings</string>
-
-    <!-- Example settings for Notifications -->
-    <string name="pref_header_notifications">Notifications</string>
-
-    <string name="pref_title_new_message_notifications">New message notifications</string>
-
-    <string name="pref_title_ringtone">Ringtone</string>
-    <string name="pref_ringtone_silent">Silent</string>
-
-    <string name="pref_title_vibrate">Vibrate</string>
-
-    <!-- TODO: Remove or change this placeholder text -->
-    <string name="hello_blank_fragment">Hello blank fragment</string>
-
-    <string name="action_popup">Popup settings</string>
-    <string name="intro_text">Touch to focus, and press the blue camera button to take photos. For more help, click Online help from Settings. Open Camera is completely free. If you like this app, please consider buying my donate app :) (see link in Settings, or Online help).\n\nPrivacy Policy: Location permission is required for geotagging, but this is disabled by default. If enabled, your location is encoded in the saved files (and it is only used for this purpose).</string>
-    <string name="intro_ok">OK (This message won\'t show again)</string>
-
-    <string name="answer_yes">Yes</string>
-    <string name="answer_no">No</string>
-
-    <string name="on">On</string> <!-- whether a setting is turned on, e.g., "Auto-level: On" -->
-    <string name="off">Off</string> <!-- whether a setting is turned off, e.g., "Auto-level: Off" -->
 
     <string name="choose_save_location">Choose save location:</string>
     <string name="clear_folder_history">Clear folder history</string>
@@ -241,57 +162,6 @@
     <string name="preference_max_brightness">Force maximum brightness</string>
     <string name="preference_max_brightness_summary">Force screen display to be at maximum brightness, rather than device default</string>
 
-    <string name="preference_category_camera_quality">Photo and Video Settings</string>
-    <string name="preference_screen_photo_settings">Photo settings…</string>
-    <string name="preference_screen_location_settings">Location settings…</string>
-    <string name="preference_resolution">Camera resolution</string>
-    <string name="preference_resolution_summary">Set the resolution of photos taken by the camera</string>
-    <string name="preference_quality">Image quality</string>
-    <string name="preference_quality_summary">Set the image JPEG quality of saved photo images (default value is 90%%)</string> <!-- '%' is encoded as '%%' - a single % can crash devices, and this isn't picked up by Android Lint! -->
-    <string name="preference_raw">RAW</string>
-    <string name="preference_raw_summary">Whether to save in RAW (DNG) format</string>
-    <string name="preference_location">Store location data (Geotagging)</string>
-    <string name="preference_location_summary">Store GPS location data in the photos/videos</string>
-    <string name="preference_gps_direction">Store compass direction</string>
-    <string name="preference_gps_direction_summary">Store GPS compass direction in the photos</string>
-    <string name="preference_require_location">Require location data</string>
-    <string name="preference_require_location_summary">If location data is enabled, only take photo/video if location data is available</string>
-    <string name="preference_stamp">Stamp photos</string>
-    <string name="preference_stamp_summary">Stamp photos with date and time; and also GPS info if location/direction data is enabled</string>
-    <string name="preference_stamp_dateformat">Datestamp format</string>
-    <string name="preference_stamp_dateformat_summary">Specify the format of the datestamp (if enabled)</string>
-    <string name="preference_stamp_timeformat">Timestamp format</string>
-    <string name="preference_stamp_timeformat_summary">Specify the format of the timestamp (if enabled)</string>
-    <string name="preference_stamp_gpsformat">GPS stamp format</string>
-    <string name="preference_stamp_gpsformat_summary">Specify the format of the GPS stamp (if enabled)</string>
-    <string name="preference_textstamp">Custom text</string>
-    <string name="preference_textstamp_summary">Stamp photos with a custom text</string>
-    <string name="preference_stamp_fontsize">Font size</string>
-    <string name="preference_stamp_fontsize_summary">Font size to use when stamping text onto photos</string>
-    <string name="preference_stamp_font_color">Font color</string>
-    <string name="preference_stamp_font_color_summary">Font color to use when stamping text onto photos</string>
-    <string name="preference_stamp_style">Text style</string>
-    <string name="preference_stamp_style_summary">Style to use when stamping text onto photos</string>
-    <string name="preference_background_photo_saving">Use background thread</string>
-    <string name="preference_background_photo_saving_summary">Whether to save photos on a background thread (for faster operation)</string>
-
-    <string name="preference_category_online">Misc</string>
-    <string name="preference_online_help">Online help</string>
-    <string name="preference_online_help_summary">Launch the Open Camera website in your browser</string>
-    <string name="preference_donate">Donate to support development</string>
-    <string name="preference_donate_summary">If you like this app, please consider making a donation to support development. You can do this by purchasing my "donation app" - click this option to open up the page for my donation app. Thanks!</string>
-    <string name="preference_use_camera2">Use Camera2 API</string>
-    <string name="preference_use_camera2_summary">Enables Android 5\'s Camera2 API - offers extra features, but may not work properly on all devices (will cause a restart)</string>
-    <string name="preference_about">About</string>
-    <string name="preference_about_summary">App and debug information</string>
-    <string name="preference_reset">Reset settings</string>
-    <string name="preference_reset_summary">Reset all Open Camera settings to default</string>
-    <string name="preference_reset_question">Are you sure you want to reset all Open Camera settings to default?</string>
-
-    <string name="about_available">Available</string>
-    <string name="about_not_available">Not available</string>
-    <string name="about_copy_to_clipboard">Copy to clipboard</string>
-
     <string name="take_photo">Take Photo</string>
     <string name="gallery">Gallery</string>
     <string name="exposure">Exposure</string>
@@ -320,16 +190,6 @@
     <!-- the permission names such as Microphone should match what Android calls them in the App permission settings -->
    <string name="permission_location_not_available">Location permission is not available</string>
 
-    <string name="max_filesize">Max file size</string>
-    <string name="mb_abbreviation">MB</string> <!-- symbol short for megabytes -->
-    <string name="gb_abbreviation">GB</string> <!-- symbol short for gigabytes -->
-
-    <string name="auto_stabilise_info">Auto-level will automatically rotate photos so that they appear level.\n\nNote that this means images will come out a slightly lower resolution (due to the rotation and cropping that\'s required).</string>
-    <string name="raw_info">DNG files contain the full uncompressed and unprocessed information from your camera.\n\nMost gallery apps won\'t recognise DNG, instead they should be used with specialised apps like Snapseed or Lightroom.\n\nNote that various processing options such as "Stamp photos" and "Auto-level" will only apply to the JPEG images, and not the DNG images.\n\nDNG files take up a lot of space; a file explorer app may be useful for transferring or deleting them.\n\nDNG files are only saved in Standard or DRO photo modes.</string>
-    <string name="hdr_info">HDR mode is useful for shots with a large variation in brightness. It works by taking multiple shots at different exposures, and combining them to create the final image.\n\nNote that HDR is not suitable for scenes with fast movement, and may result in less accurate colour reproduction.\n\nTaking photos in HDR mode will be slower.</string>
-
-    <string name="dont_show_again">Don\'t show again</string>
-
     <string name="photo_mode">Photo Mode</string>
     <string name="photo_mode_standard">Standard</string>
     <string name="photo_mode_hdr">HDR</string>
@@ -346,99 +206,6 @@
     <string name="permission_rationale_record_audio">Microphone permission is required to record video with audio</string>
     <string name="permission_rationale_location">Location permission is required for geotagging</string>
 
-    <string name="preference_category_photo_debugging">Debugging options</string>
-    <string name="preference_category_video_debugging">Debugging options</string>
-    <string name="preference_camera2_fake_flash">Use alternative flash method</string>
-    <string name="preference_camera2_fake_flash_summary">Enable this if your device has buggy flash behaviour with Camera2 API</string>
-
-    <string name="preference_expo_bracketing_n_images">Exposure Bracketing</string>
-    <string name="preference_expo_bracketing_n_images_summary">Number of images for exposure bracketing mode</string>
-    <string name="preference_expo_bracketing_stops">Exposure Bracketing Stops</string>
-    <string name="preference_expo_bracketing_stops_summary">How many stops to subtract/add for the darkest/brightest image</string>
-
     <string name="seconds_abbreviation">s</string> <!-- short for seconds -->
 
-    <string name="dark">Dark</string> <!-- exposure compensation dark -->
-    <string name="bright">Bright</string> <!-- exposure compensation bright -->
-    <string name="exposure_shutter_speed">Shutter speed</string>
-
-    <string name="camera_error">Serious camera error</string>
-
-    <string name="preference_camera2_fast_burst">Enable fast HDR/expo burst</string>
-    <string name="preference_camera2_fast_burst_summary">Allows faster capture of the HDR/expo shots. Disable this if your device has problems when taking photos with HDR or Expo photo modes.</string>
-
-    <string name="camera">Camera</string>
-    <string name="selfie">Selfie</string>
-
-    <string name="preference_front_camera_mirror">Front camera mirror</string>
-    <string name="preference_front_camera_mirror_summary">Whether to mirror images when using the front camera.</string>
-
-    <string name="preference_calibrate_level">Calibrate level angle</string>
-    <string name="preference_calibrate_level_summary">This option calibrates your device\'s accelerometer, so the auto-level and on-screen level/angle options work correctly.</string>
-    <string name="preference_calibrate_level_dialog">Please place your device on a flat horizontal surface so that it is level (either in portrait or landscape orientation), and then select Calibrate.\n\nPress Reset to remove the calibration from your device.\n\nPress back button to cancel.</string>
-    <string name="preference_calibrate_level_calibrate">Calibrate</string>
-    <string name="preference_calibrate_level_reset">Reset</string>
-    <string name="preference_calibrate_level_calibrated">Level calibrated</string>
-    <string name="preference_calibrate_level_calibration_reset">Level calibration reset</string>
-
-    <string name="photo_mode_dro">DRO</string>
-
-    <string name="duration_unlimited">Unlimited</string>
-    <string name="duration_3s">3 seconds</string>
-    <string name="duration_5s">5 seconds</string>
-    <string name="duration_10s">10 seconds</string>
-    <string name="duration_15s">15 seconds</string>
-    <string name="duration_30s">30 seconds</string>
-    <string name="duration_1m">1 minute</string>
-    <string name="duration_2m">2 minutes</string>
-    <string name="duration_3m">3 minutes</string>
-    <string name="duration_4m">4 minutes</string>
-    <string name="duration_5m">5 minutes</string>
-    <string name="duration_6m">6 minutes</string>
-    <string name="duration_7m">7 minutes</string>
-    <string name="duration_8m">8 minutes</string>
-    <string name="duration_9m">9 minutes</string>
-    <string name="duration_10m">10 minutes</string>
-    <string name="duration_11m">11 minutes</string>
-    <string name="duration_12m">12 minutes</string>
-    <string name="duration_15m">15 minutes</string>
-    <string name="duration_20m">20 minutes</string>
-    <string name="duration_25m">25 minutes</string>
-    <string name="duration_30m">30 minutes</string>
-    <string name="duration_45m">45 minutes</string>
-    <string name="duration_1h">1 hour</string>
-
-    <string name="preference_show_take_photo">Show take photo icon</string>
-    <string name="preference_show_take_photo_summary">Show the icon for taking photos and recording videos. Useful if your device has a hardware shutter button and you\'d rather use that.</string>
-
-    <string name="capturing">Capturing…</string>
-
-    <string name="failed_to_process_hdr">Failed to create HDR image</string>
-
-    <string name="white_balance_auto">Auto</string>
-    <string name="white_balance_cloudy">Cloudy</string>
-    <string name="white_balance_daylight">Daylight</string>
-    <string name="white_balance_fluorescent">Fluorescent</string>
-    <string name="white_balance_incandescent">Incandescent</string>
-    <string name="white_balance_shade">Shade</string>
-    <string name="white_balance_twilight">Twilight</string>
-    <string name="white_balance_warm">Warm</string>
-    <string name="white_balance_manual">Manual</string>
-
-    <string name="scene_mode_action">Action</string>
-    <string name="scene_mode_barcode">Barcode</string>
-    <string name="scene_mode_beach">Beach</string>
-    <string name="scene_mode_candlelight">Candlelight</string>
-    <string name="scene_mode_auto">Auto</string>
-    <string name="scene_mode_fireworks">Fireworks</string>
-    <string name="scene_mode_landscape">Landscape</string>
-    <string name="scene_mode_night">Night</string>
-    <string name="scene_mode_night_portrait">Night portrait</string>
-    <string name="scene_mode_party">Party</string>
-    <string name="scene_mode_portrait">Portrait</string>
-    <string name="scene_mode_snow">Snow</string>
-    <string name="scene_mode_sports">Sports</string>
-    <string name="scene_mode_steady_photo">Steady photo</string>
-    <string name="scene_mode_sunset">Sunset</string>
-    <string name="scene_mode_theatre">Theatre</string>
 </resources>

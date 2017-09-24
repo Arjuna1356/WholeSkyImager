@@ -19,6 +19,7 @@ import android.net.Uri;
 
 import android.os.Build;
 import android.os.Bundle;
+import android.os.Environment;
 import android.os.Handler;
 import android.os.HandlerThread;
 
@@ -47,7 +48,6 @@ import android.view.WindowManager;
 import android.widget.Button;
 import android.widget.FrameLayout;
 import android.widget.TextView;
-import android.widget.Toast;
 
 import java.io.File;
 import java.util.Date;
@@ -84,9 +84,8 @@ public class MainActivity extends AppCompatActivity
     private boolean supports_camera2 = false;
 
     final private int MY_PERMISSIONS_REQUEST_CAMERA = 0;
-    final private int MY_PERMISSIONS_REQUEST_STORAGE = 1;
-    final private int MY_PERMISSIONS_REQUEST_RECORD_AUDIO = 2;
-    final private int MY_PERMISSIONS_REQUEST_LOCATION = 3;
+    final private int MY_PERMISSIONS_REQUEST_RECORD_AUDIO = 1;
+    final private int MY_PERMISSIONS_REQUEST_LOCATION = 2;
 
     @Override
     protected void onCreate(Bundle savedInstanceState)
@@ -142,12 +141,6 @@ public class MainActivity extends AppCompatActivity
             case R.id.action_settings:
                 Intent intentSettings = new Intent(this, SettingsActivity.class);
                 startActivity(intentSettings);
-                return true;
-
-            case R.id.action_refresh:
-                getWSISettings();
-//                checkNetworkStatus();
-                Toast.makeText(MainActivity.this, "Refreshed Settings", Toast.LENGTH_SHORT).show();
                 return true;
 
             case R.id.action_help:
@@ -279,7 +272,8 @@ public class MainActivity extends AppCompatActivity
             return;
         }
 
-        if (ActivityCompat.shouldShowRequestPermissionRationale(this, Manifest.permission.CAMERA))
+        if (ActivityCompat.shouldShowRequestPermissionRationale(this, Manifest.permission.CAMERA)
+                || ActivityCompat.shouldShowRequestPermissionRationale(this, Manifest.permission.WRITE_EXTERNAL_STORAGE))
         {
             // Show an explanation to the user *asynchronously* -- don't block
             // this thread waiting for the user's response! After the user
@@ -290,33 +284,7 @@ public class MainActivity extends AppCompatActivity
             // Can go ahead and request the permission
             if (MyDebug.LOG)
                 Log.d(TAG, "requesting camera permission...");
-            ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.CAMERA}, MY_PERMISSIONS_REQUEST_CAMERA);
-        }
-    }
-
-    public void requestStoragePermission()
-    {
-        if (MyDebug.LOG)
-            Log.d(TAG, "requestStoragePermission");
-        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.M)
-        {
-            if (MyDebug.LOG)
-                Log.e(TAG, "shouldn't be requesting permissions for pre-Android M!");
-            return;
-        }
-
-        if (ActivityCompat.shouldShowRequestPermissionRationale(this, Manifest.permission.WRITE_EXTERNAL_STORAGE))
-        {
-            // Show an explanation to the user *asynchronously* -- don't block
-            // this thread waiting for the user's response! After the user
-            // sees the explanation, try again to request the permission.
-            showRequestPermissionRationale(MY_PERMISSIONS_REQUEST_STORAGE);
-        } else
-        {
-            // Can go ahead and request the permission
-            if (MyDebug.LOG)
-                Log.d(TAG, "requesting storage permission...");
-            ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.WRITE_EXTERNAL_STORAGE}, MY_PERMISSIONS_REQUEST_STORAGE);
+            ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.CAMERA, Manifest.permission.WRITE_EXTERNAL_STORAGE}, MY_PERMISSIONS_REQUEST_CAMERA);
         }
     }
 
@@ -349,27 +317,6 @@ public class MainActivity extends AppCompatActivity
                 {
                     if (MyDebug.LOG)
                         Log.d(TAG, "camera permission denied");
-                    // permission denied, boo! Disable the
-                    // functionality that depends on this permission.
-                    // Open Camera doesn't need to do anything: the camera will remain closed
-                }
-                return;
-            }
-            case MY_PERMISSIONS_REQUEST_STORAGE:
-            {
-                // If request is cancelled, the result arrays are empty.
-                if (grantResults.length > 0
-                        && grantResults[0] == PackageManager.PERMISSION_GRANTED)
-                {
-                    // permission was granted, yay! Do the
-                    // contacts-related task you need to do.
-                    if (MyDebug.LOG)
-                        Log.d(TAG, "storage permission granted");
-//                    preview.retryOpenCamera();
-                } else
-                {
-                    if (MyDebug.LOG)
-                        Log.d(TAG, "storage permission denied");
                     // permission denied, boo! Disable the
                     // functionality that depends on this permission.
                     // Open Camera doesn't need to do anything: the camera will remain closed
@@ -433,74 +380,6 @@ public class MainActivity extends AppCompatActivity
         }
     }
 
-    /**
-     * Listens for the response from the Storage Access Framework dialog to select a folder
-     * (as opened with openFolderChooserDialogSAF()).
-     */
-    @TargetApi(Build.VERSION_CODES.LOLLIPOP)
-    public void onActivityResult(int requestCode, int resultCode, Intent resultData)
-    {
-        if (MyDebug.LOG)
-            Log.d(TAG, "onActivityResult: " + requestCode);
-        if (requestCode == 42)
-        {
-            if (resultCode == RESULT_OK && resultData != null)
-            {
-                Uri treeUri = resultData.getData();
-                if (MyDebug.LOG)
-                    Log.d(TAG, "returned treeUri: " + treeUri);
-                // from https://developer.android.com/guide/topics/providers/document-provider.html#permissions :
-                final int takeFlags = resultData.getFlags()
-                        & (Intent.FLAG_GRANT_READ_URI_PERMISSION
-                        | Intent.FLAG_GRANT_WRITE_URI_PERMISSION);
-                try
-                {
-                    /*if( true )
-                        throw new SecurityException(); // test*/
-                    // Check for the freshest data.
-                    getContentResolver().takePersistableUriPermission(treeUri, takeFlags);
-
-                    SharedPreferences sharedPreferences = PreferenceManager.getDefaultSharedPreferences(this);
-                    SharedPreferences.Editor editor = sharedPreferences.edit();
-                    editor.putString(PreferenceKeys.getSaveLocationSAFPreferenceKey(), treeUri.toString());
-                    editor.apply();
-
-                    File file = applicationInterface.getStorageUtils().getImageFolder();
-                } catch (SecurityException e)
-                {
-                    Log.e(TAG, "SecurityException failed to take permission");
-                    e.printStackTrace();
-                    // failed - if the user had yet to set a save location, make sure we switch SAF back off
-                    SharedPreferences sharedPreferences = PreferenceManager.getDefaultSharedPreferences(this);
-                    String uri = sharedPreferences.getString(PreferenceKeys.getSaveLocationSAFPreferenceKey(), "");
-                    if (uri.length() == 0)
-                    {
-                        if (MyDebug.LOG)
-                            Log.d(TAG, "no SAF save location was set");
-                        SharedPreferences.Editor editor = sharedPreferences.edit();
-                        editor.putBoolean(PreferenceKeys.getUsingSAFPreferenceKey(), false);
-                        editor.apply();
-                    }
-                }
-            } else
-            {
-                if (MyDebug.LOG)
-                    Log.d(TAG, "SAF dialog cancelled");
-                // cancelled - if the user had yet to set a save location, make sure we switch SAF back off
-                SharedPreferences sharedPreferences = PreferenceManager.getDefaultSharedPreferences(this);
-                String uri = sharedPreferences.getString(PreferenceKeys.getSaveLocationSAFPreferenceKey(), "");
-                if (uri.length() == 0)
-                {
-                    if (MyDebug.LOG)
-                        Log.d(TAG, "no SAF save location was set");
-                    SharedPreferences.Editor editor = sharedPreferences.edit();
-                    editor.putBoolean(PreferenceKeys.getUsingSAFPreferenceKey(), false);
-                    editor.apply();
-                }
-            }
-        }
-    }
-
     public void waitUntilImageQueueEmpty()
     {
         if (MyDebug.LOG)
@@ -515,27 +394,6 @@ public class MainActivity extends AppCompatActivity
         this.preview.takePicturePressed();
     }
 
-    private void startBackgroundThread()
-    {
-        mBackgroundThread = new HandlerThread("Camera Background");
-        mBackgroundThread.start();
-        mBackgroundHandler = new Handler();
-    }
-
-    private void stopBackgroundThread()
-    {
-        mBackgroundThread.quitSafely();
-        try
-        {
-            mBackgroundThread.join();
-            mBackgroundThread = null;
-            mBackgroundHandler = null;
-        } catch (InterruptedException e)
-        {
-            e.printStackTrace();
-        }
-    }
-
     private void initialize(Bundle savedInstanceState)
     {
         long debug_time = 0;
@@ -544,8 +402,6 @@ public class MainActivity extends AppCompatActivity
             Log.d(TAG, "initialize: " + this);
             debug_time = System.currentTimeMillis();
         }
-
-        getWSISettings();
 
         frameLayout = (FrameLayout) findViewById(R.id.camera_preview);
 
@@ -571,15 +427,13 @@ public class MainActivity extends AppCompatActivity
 
                 if (status == 0)
                 {
-                    getWSISettings();
-
                     beginImaging();
 
                     runButton.setText(getResources().getString(R.string.captureButton_text));
                     v.setTag(1);
                 } else
                 {
-
+                    clickedTakePhoto();
                 }
 
             }
@@ -607,6 +461,8 @@ public class MainActivity extends AppCompatActivity
             }
         });
 
+        sharedPref = PreferenceManager.getDefaultSharedPreferences(this);
+
         activityManager = (ActivityManager) getSystemService(ACTIVITY_SERVICE);
 
         applicationInterface = new MyApplicationInterface(this, savedInstanceState);
@@ -626,6 +482,8 @@ public class MainActivity extends AppCompatActivity
             setDeviceDefaults();
             setFirstTimeFlag();
         }
+
+        setSaveLocation();
     }
 
     /* This method sets the preference defaults which are set specific for a particular device.
@@ -638,18 +496,11 @@ public class MainActivity extends AppCompatActivity
             Log.d(TAG, "setDeviceDefaults");
         boolean is_samsung = Build.MANUFACTURER.toLowerCase(Locale.US).contains("samsung");
         boolean is_oneplus = Build.MANUFACTURER.toLowerCase(Locale.US).contains("oneplus");
-        //boolean is_nexus = Build.MODEL.toLowerCase(Locale.US).contains("nexus");
-        //boolean is_nexus6 = Build.MODEL.toLowerCase(Locale.US).contains("nexus 6");
-        //boolean is_pixel_phone = Build.DEVICE != null && Build.DEVICE.equals("sailfish");
-        //boolean is_pixel_xl_phone = Build.DEVICE != null && Build.DEVICE.equals("marlin");
+
         if (MyDebug.LOG)
         {
             Log.d(TAG, "is_samsung? " + is_samsung);
             Log.d(TAG, "is_oneplus? " + is_oneplus);
-            //Log.d(TAG, "is_nexus? " + is_nexus);
-            //Log.d(TAG, "is_nexus6? " + is_nexus6);
-            //Log.d(TAG, "is_pixel_phone? " + is_pixel_phone);
-            //Log.d(TAG, "is_pixel_xl_phone? " + is_pixel_xl_phone);
         }
         if (is_samsung || is_oneplus)
         {
@@ -665,16 +516,6 @@ public class MainActivity extends AppCompatActivity
             editor.putBoolean(PreferenceKeys.getCamera2FakeFlashPreferenceKey(), true);
             editor.apply();
         }
-		/*if( is_nexus6 ) {
-			// Nexus 6 captureBurst() started having problems with Android 7 upgrade - images appeared in wrong order (and with wrong order of shutter speeds in exif info), as well as problems with the camera failing with serious errors
-			// we set this even for Nexus 6 devices not on Android 7, as at some point they'll likely be upgraded to Android 7
-			// Update: now fixed in v1.37, this was due to bug where we set RequestTag.CAPTURE for all captures in takePictureBurstExpoBracketing(), rather than just the last!
-			if( MyDebug.LOG )
-				Log.d(TAG, "disable fast burst for camera2");
-			SharedPreferences.Editor editor = sharedPreferences.edit();
-			editor.putBoolean(PreferenceKeys.getCamera2FastBurstPreferenceKey(), false);
-			editor.apply();
-		}*/
     }
 
     private void setFirstTimeFlag()
@@ -686,43 +527,17 @@ public class MainActivity extends AppCompatActivity
         editor.apply();
     }
 
-    private void updateSaveFolder(String new_save_location)
-    {
-        if (MyDebug.LOG)
-            Log.d(TAG, "updateSaveFolder: " + new_save_location);
-        if (new_save_location != null)
-        {
-            String orig_save_location = this.applicationInterface.getStorageUtils().getSaveLocation();
-
-            if (!orig_save_location.equals(new_save_location))
-            {
-                if (MyDebug.LOG)
-                    Log.d(TAG, "changed save_folder to: " + this.applicationInterface.getStorageUtils().getSaveLocation());
-                SharedPreferences.Editor editor = sharedPref.edit();
-                editor.putString(PreferenceKeys.getSaveLocationPreferenceKey(), new_save_location);
-                editor.apply();
-            }
-        }
-    }
-
     private void checkPermissions()
     {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M)
         {
             // Add permission for camera and let user grant the permission
-            if (ContextCompat.checkSelfPermission(this, Manifest.permission.CAMERA) != PackageManager.PERMISSION_GRANTED)
+            if (ContextCompat.checkSelfPermission(this, Manifest.permission.CAMERA) != PackageManager.PERMISSION_GRANTED &&
+                    ContextCompat.checkSelfPermission(this, Manifest.permission.WRITE_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED)
             {
                 if (MyDebug.LOG)
                     Log.d(TAG, "camera permission not available");
                 applicationInterface.requestCameraPermission();
-                // return for now - the application should try to reopen the camera if permission is granted
-                return;
-            }
-            if (ContextCompat.checkSelfPermission(this, Manifest.permission.WRITE_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED)
-            {
-                if (MyDebug.LOG)
-                    Log.d(TAG, "storage permission not available");
-                applicationInterface.requestStoragePermission();
                 // return for now - the application should try to reopen the camera if permission is granted
                 return;
             }
@@ -811,14 +626,8 @@ public class MainActivity extends AppCompatActivity
         {
             if (MyDebug.LOG)
                 Log.d(TAG, "display rationale for camera permission");
-            permissions = new String[]{Manifest.permission.CAMERA};
+            permissions = new String[]{Manifest.permission.CAMERA, Manifest.permission.WRITE_EXTERNAL_STORAGE};
             message_id = R.string.permission_rationale_camera;
-        } else if (permission_code == MY_PERMISSIONS_REQUEST_STORAGE)
-        {
-            if (MyDebug.LOG)
-                Log.d(TAG, "display rationale for storage permission");
-            permissions = new String[]{Manifest.permission.WRITE_EXTERNAL_STORAGE};
-            message_id = R.string.permission_rationale_storage;
         } else if (permission_code == MY_PERMISSIONS_REQUEST_RECORD_AUDIO)
         {
             if (MyDebug.LOG)
@@ -870,64 +679,34 @@ public class MainActivity extends AppCompatActivity
         }
     }
 
-    /**
-     * Opens the Storage Access Framework dialog to select a folder.
-     *
-     * @param from_preferences Whether called from the Preferences
-     */
-    @TargetApi(Build.VERSION_CODES.LOLLIPOP)
-    private void openFolderChooserDialogSAF(boolean from_preferences)
+    private void setSaveLocation()
     {
-        if (MyDebug.LOG)
-            Log.d(TAG, "openFolderChooserDialogSAF: " + from_preferences);
-        Intent intent = new Intent(Intent.ACTION_OPEN_DOCUMENT_TREE);
-        //Intent intent = new Intent(Intent.ACTION_OPEN_DOCUMENT);
-        //intent.addCategory(Intent.CATEGORY_OPENABLE);
-        startActivityForResult(intent, 42);
-    }
+        SharedPreferences sharedPreferences = PreferenceManager.getDefaultSharedPreferences(this);
+        String orig_save_location = this.applicationInterface.getStorageUtils().getSaveLocation();
 
-    /**
-     * set up preferences
-     */
-    private void getWSISettings()
-    {
-        sharedPref = PreferenceManager.getDefaultSharedPreferences(this);
+        // make a new file directory inside the "sdcard" folder
+        File mediaStorageDir = new File(Environment.getExternalStorageDirectory(), "WSI");
 
-        Log.d(TAG, "Model No. in pref xml: " + Integer.parseInt(sharedPref.getString("wahrsisNo", "0")));
-//        tvEventLog.append("\nModel No. in pref xml: " + Integer.parseInt(sharedPref.getString("wahrsisNo", "0")));
-        // Set wahrsis model number according to settings activity
-        if (Integer.parseInt(sharedPref.getString("wahrsisNo", "0")) != 0)
+        // if folder could not be created
+        if (!mediaStorageDir.exists())
         {
-            wahrsisModelNr = Integer.parseInt(sharedPref.getString("wahrsisNo", "404"));
-            Log.d(TAG, "Model No. set to: " + wahrsisModelNr);
+            if (!mediaStorageDir.mkdirs())
+            {
+                Log.d("WholeSkyImager", "failed to create directory");
+            }
         }
 
-        pictureInterval = Integer.parseInt(sharedPref.getString("picInterval", "404"));
-        Log.d(TAG, "Picture interval: " + pictureInterval + " min.");
-
-        pictureInterval = Integer.parseInt(sharedPref.getString("picInterval", "404"));
-
-        delayTime = Integer.parseInt(sharedPref.getString("startDelay", "15"));
-
-        afEnabled = sharedPref.getBoolean("enableAF", true);
-//        tvEventLog.append("\nPicture interval: " + pictureInterval + " min.");
-//        flagWriteExif = sharedPref.getBoolean("extendedExif", false);
-//        Log.d(TAG, "Extended exif: " + flagWriteExif);
-//        tvEventLog.append("\nExtended exif: " + flagWriteExif);
-//        flagRealignImage = sharedPref.getBoolean("realignImage", false);
-//        Log.d(TAG, "Realign image: " + flagRealignImage);
-//        tvEventLog.append("\nRealign image: " + flagRealignImage);
-
-//        authorizationToken = sharedPref.getString("authorToken", "f26543bea24e3545a8ef9708dffd7ce5d35127e2");
-//        Log.d(TAG, "Authorization token: " + authorizationToken);
+        if( !orig_save_location.equals(mediaStorageDir.toString()) ) {
+            if( MyDebug.LOG )
+                Log.d(TAG, "changed save_folder to: " + this.applicationInterface.getStorageUtils().getSaveLocation());
+            SharedPreferences.Editor editor = sharedPreferences.edit();
+            editor.putString(PreferenceKeys.getSaveLocationPreferenceKey(), mediaStorageDir.toString());
+            editor.apply();
+        }
     }
 
     private void beginImaging()
     {
-//        mBackgroundHandler = new Handler();
-
-//        mBackgroundHandler.postDelayed(imagingRunnable, delayTime * 1000);
-
         // set up the camera and its preview
         preview = new Preview(applicationInterface, ((ViewGroup) findViewById(R.id.camera_preview)));
         preview.onResume();
@@ -942,8 +721,6 @@ public class MainActivity extends AppCompatActivity
 
         if (status == 1)
         {
-//            mBackgroundHandler.removeCallbacks(imagingRunnable);
-//            mBackgroundHandler = null;
             preview.onPause();
             preview = null;
 

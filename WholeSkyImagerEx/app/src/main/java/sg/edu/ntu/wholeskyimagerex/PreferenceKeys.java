@@ -25,12 +25,6 @@ public class PreferenceKeys
     public static String getHDRInfoPreferenceKey() {
         return "done_hdr_info";
     }
-    
-    /** If this preference is set, no longer show the raw info dialog.
-	 */
-    public static String getRawInfoPreferenceKey() {
-        return "done_raw_info";
-    }
 
     public static String getUseCamera2PreferenceKey() {
     	return "preference_use_camera2";
@@ -88,16 +82,8 @@ public class PreferenceKeys
     	return "preference_expo_bracketing_stops";
     }
     
-    public static String getVolumeKeysPreferenceKey() {
-    	return "preference_volume_keys";
-    }
-    
     public static String getQualityPreferenceKey() {
     	return "preference_quality";
-    }
-    
-    public static String getAutoStabilisePreferenceKey() {
-    	return "preference_auto_stabilise";
     }
     
     public static String getPhotoModePreferenceKey() {
@@ -152,10 +138,6 @@ public class PreferenceKeys
     	return "preference_stamp_style";
     }
 
-    public static String getFrontCameraMirrorKey() {
-        return "preference_front_camera_mirror";
-    }
-
     public static String getBackgroundPhotoSavingPreferenceKey() {
     	return "preference_background_photo_saving";
     }
@@ -168,44 +150,16 @@ public class PreferenceKeys
         return "preference_camera2_fast_burst";
     }
 
-    public static String getUIPlacementPreferenceKey() {
-    	return "preference_ui_placement";
-    }
-    
-    public static String getTouchCapturePreferenceKey() {
-    	return "preference_touch_capture";
-    }
-
     public static String getPausePreviewPreferenceKey() {
     	return "preference_pause_preview";
-    }
-
-    public static String getShowToastsPreferenceKey() {
-    	return "preference_show_toasts";
     }
 
     public static String getThumbnailAnimationPreferenceKey() {
     	return "preference_thumbnail_animation";
     }
 
-    public static String getTakePhotoBorderPreferenceKey() {
-    	return "preference_take_photo_border";
-    }
-
-    public static String getShowWhenLockedPreferenceKey() {
-    	return "preference_show_when_locked";
-    }
-
     public static String getStartupFocusPreferenceKey() {
     	return "preference_startup_focus";
-    }
-
-    public static String getKeepDisplayOnPreferenceKey() {
-    	return "preference_keep_display_on";
-    }
-
-    public static String getMaxBrightnessPreferenceKey() {
-    	return "preference_max_brightness";
     }
     
     public static String getUsingSAFPreferenceKey() {
@@ -228,60 +182,8 @@ public class PreferenceKeys
     	return "preference_save_zulu_time";
     }
 
-    public static String getShowTakePhotoPreferenceKey() {
-        return "preference_show_take_photo";
-    }
-
-    public static String getShowISOPreferenceKey() {
-    	return "preference_show_iso";
-    }
-
-    public static String getShowAnglePreferenceKey() {
-    	return "preference_show_angle";
-    }
-    
-    public static String getShowAngleLinePreferenceKey() {
-    	return "preference_show_angle_line";
-    }
-
-    public static String getShowPitchLinesPreferenceKey() {
-        return "preference_show_pitch_lines";
-    }
-
-    public static String getShowGeoDirectionLinesPreferenceKey() {
-        return "preference_show_geo_direction_lines";
-    }
-
-    public static String getShowAngleHighlightColorPreferenceKey() {
-    	return "preference_angle_highlight_color";
-    }
-
     public static String getCalibratedLevelAnglePreferenceKey() {
         return "preference_calibrate_level_angle";
-    }
-
-    public static String getShowGeoDirectionPreferenceKey() {
-    	return "preference_show_geo_direction";
-    }
-    
-    public static String getShowFreeMemoryPreferenceKey() {
-    	return "preference_free_memory";
-    }
-    
-    public static String getShowTimePreferenceKey() {
-    	return "preference_show_time";
-    }
-    
-    public static String getShowBatteryPreferenceKey() {
-    	return "preference_show_battery";
-    }
-    
-    public static String getShowGridPreferenceKey() {
-    	return "preference_grid";
-    }
-    
-    public static String getShowCropGuidePreferenceKey() {
-    	return "preference_crop_guide";
     }
 
     public static String getPreviewSizePreferenceKey() {
@@ -300,14 +202,6 @@ public class PreferenceKeys
     	return "preference_timer";
     }
     
-    public static String getTimerBeepPreferenceKey() {
-    	return "preference_timer_beep";
-    }
-    
-    public static String getTimerSpeakPreferenceKey() {
-    	return "preference_timer_speak";
-    }
-    
     public static String getBurstModePreferenceKey() {
     	return "preference_burst_mode";
     }
@@ -318,9 +212,5 @@ public class PreferenceKeys
     
     public static String getShutterSoundPreferenceKey() {
     	return "preference_shutter_sound";
-    }
-    
-    public static String getImmersiveModePreferenceKey() {
-    	return "preference_immersive_mode";
     }
 }

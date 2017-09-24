@@ -72,7 +72,7 @@ public class TextFormatter
      *  Returns "" if preference_stamp_gpsformat is "preference_stamp_gpsformat_none", or both store_location and
      *  store_geo_direction are false.
      */
-    public String getGPSString(String preference_stamp_gpsformat, boolean store_location, Location location, boolean store_geo_direction, double geo_direction) {
+    public String getGPSString(String preference_stamp_gpsformat, boolean store_location, Location location) {
         String gps_stamp = "";
         if( !preference_stamp_gpsformat.equals("preference_stamp_gpsformat_none") ) {
             if( store_location ) {
@@ -85,17 +85,6 @@ public class TextFormatter
                 if( location.hasAltitude() ) {
                     gps_stamp += ", " + decimalFormat.format(location.getAltitude()) + context.getResources().getString(R.string.metres_abbreviation);
                 }
-            }
-            if( store_geo_direction ) {
-                float geo_angle = (float) Math.toDegrees(geo_direction);
-                if( geo_angle < 0.0f ) {
-                    geo_angle += 360.0f;
-                }
-                if( MyDebug.LOG )
-                    Log.d(TAG, "geo_angle: " + geo_angle);
-                if( gps_stamp.length() > 0 )
-                    gps_stamp += ", ";
-                gps_stamp += "" + Math.round(geo_angle) + (char)0x00B0;
             }
         }
         if( MyDebug.LOG )

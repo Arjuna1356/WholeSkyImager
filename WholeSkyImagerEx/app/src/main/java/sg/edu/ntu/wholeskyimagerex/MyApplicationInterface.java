@@ -177,13 +177,26 @@ public class MyApplicationInterface implements ApplicationInterface {
     @Override
 	public String getFlashPref() {
 		SharedPreferences sharedPreferences = PreferenceManager.getDefaultSharedPreferences(getContext());
-		return sharedPreferences.getString(PreferenceKeys.getFlashPreferenceKey(cameraId), "");
+		return "flash_off";
+//		return sharedPreferences.getString(PreferenceKeys.getFlashPreferenceKey(cameraId), "");
     }
 
     @Override
 	public String getFocusPref() {
 		SharedPreferences sharedPreferences = PreferenceManager.getDefaultSharedPreferences(getContext());
-		return sharedPreferences.getString(PreferenceKeys.getFocusPreferenceKey(cameraId), "");
+
+		String afEnabled;
+
+		if(sharedPreferences.getBoolean("enableAF", true))
+		{
+			afEnabled = "focus_mode_auto";
+		}
+		else
+		{
+			afEnabled = "focus_mode_infinity";
+		}
+
+		return afEnabled;
     }
 
     @Override
@@ -538,7 +551,7 @@ public class MyApplicationInterface implements ApplicationInterface {
     }
 
     public PhotoMode getPhotoMode(SharedPreferences sharedPreferences) {
-		String photo_mode_pref = sharedPreferences.getString(PreferenceKeys.getPhotoModePreferenceKey(), "preference_photo_mode_std");
+		String photo_mode_pref = sharedPreferences.getString("scenePref", "preference_photo_mode_std");
 		boolean dro = photo_mode_pref.equals("preference_photo_mode_dro");
 		if( dro && main_activity.supportsDRO() )
 			return PhotoMode.DRO;
@@ -719,13 +732,6 @@ public class MyApplicationInterface implements ApplicationInterface {
     }
     
     @Override
-	public void requestStoragePermission() {
-		if( MyDebug.LOG )
-			Log.d(TAG, "requestStoragePermission");
-		main_activity.requestStoragePermission();
-    }
-    
-    @Override
 	public void setExposureTimePref(long exposure_time) {
     	SharedPreferences sharedPreferences = PreferenceManager.getDefaultSharedPreferences(getContext());
 		SharedPreferences.Editor editor = sharedPreferences.edit();
@@ -878,8 +884,6 @@ public class MyApplicationInterface implements ApplicationInterface {
 		String preference_stamp_gpsformat = this.getStampGPSFormatPref();
 		boolean store_location = getGeotaggingPref() && getLocation() != null;
 		Location location = store_location ? getLocation() : null;
-		boolean store_geo_direction = main_activity.getPreview().hasGeoDirection() && getGeodirectionPref();
-		double geo_direction = store_geo_direction ? main_activity.getPreview().getGeoDirection() : 0.0;
         
 		boolean do_in_background = saveInBackground(image_capture_intent);
 		
@@ -897,7 +901,7 @@ public class MyApplicationInterface implements ApplicationInterface {
 				using_camera2, image_quality,
 				current_date,
 				preference_stamp, preference_textstamp, font_size, color, pref_style, preference_stamp_dateformat, preference_stamp_timeformat, preference_stamp_gpsformat,
-				store_location, location, store_geo_direction, geo_direction,
+				store_location, location,
 				sample_factor);
 
 		if( MyDebug.LOG )
