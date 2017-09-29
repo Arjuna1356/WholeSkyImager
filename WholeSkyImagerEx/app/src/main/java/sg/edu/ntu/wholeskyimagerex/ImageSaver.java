@@ -21,6 +21,9 @@ import android.net.Uri;
 import android.os.Build;
 import android.support.annotation.RequiresApi;
 import android.util.Log;
+import android.widget.TextView;
+
+import org.w3c.dom.Text;
 
 import java.io.ByteArrayInputStream;
 import java.io.File;
@@ -1130,6 +1133,7 @@ public class ImageSaver extends Thread
 		if( MyDebug.LOG ) {
 			Log.d(TAG, "Save single image performance: total time: " + (System.currentTimeMillis() - time_s));
 		}
+
         return success;
 	}
 

@@ -15,8 +15,6 @@ import android.content.pm.PackageManager;
 
 import android.graphics.drawable.ColorDrawable;
 
-import android.net.Uri;
-
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Environment;
@@ -135,6 +133,8 @@ public class MainActivity extends AppCompatActivity
         // automatically handle clicks on the Home/Up button, so long
         // as you specify a parent activity in AndroidManifest.xml.
         int id = item.getItemId();
+
+        waitUntilImageQueueEmpty(); // so we don't risk losing any images
 
         switch (id)
         {
@@ -380,20 +380,6 @@ public class MainActivity extends AppCompatActivity
         }
     }
 
-    public void waitUntilImageQueueEmpty()
-    {
-        if (MyDebug.LOG)
-            Log.d(TAG, "waitUntilImageQueueEmpty");
-        applicationInterface.getImageSaver().waitUntilDone();
-    }
-
-    public void clickedTakePhoto()
-    {
-        if (MyDebug.LOG)
-            Log.d(TAG, "clickedTakePhoto");
-        this.preview.takePicturePressed();
-    }
-
     private void initialize(Bundle savedInstanceState)
     {
         long debug_time = 0;
@@ -454,9 +440,6 @@ public class MainActivity extends AppCompatActivity
 
                     runButton.setTag(0);
                     runButton.setText(getResources().getString(R.string.runButton_text));
-
-                    Log.d(TAG, "Imaging Stopped");
-                    tvEventLog.append("\nImaging Stopped");
                 }
             }
         });
@@ -729,6 +712,30 @@ public class MainActivity extends AppCompatActivity
 
             Log.d(TAG, "Imaging Stopped");
             tvEventLog.append("\nImaging Stopped");
+        }
+    }
+
+    private void clickedTakePhoto()
+    {
+        if (MyDebug.LOG)
+            Log.d(TAG, "clickedTakePhoto");
+
+        tvEventLog.append("\nCapturing Image");
+
+        this.preview.takePicturePressed();
+    }
+
+    private void waitUntilImageQueueEmpty()
+    {
+        if (MyDebug.LOG)
+            Log.d(TAG, "waitUntilImageQueueEmpty");
+        applicationInterface.getImageSaver().waitUntilDone();
+
+        final int status = (Integer) runButton.getTag();
+
+        if (status == 1)
+        {
+            tvEventLog.append("\nImage Capture Done");
         }
     }
 

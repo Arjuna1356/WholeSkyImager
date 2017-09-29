@@ -108,7 +108,6 @@ public class Preview implements SurfaceHolder.Callback, TextureView.SurfaceTextu
 
 	private boolean is_preview_started;
 
-    private int current_orientation; // orientation received by onOrientationChanged
 	private int current_rotation; // orientation relative to camera's orientation (used for parameters.setRotation())
 
 	private float minimum_focus_distance;
@@ -889,12 +888,7 @@ public class Preview implements SurfaceHolder.Callback, TextureView.SurfaceTextu
 				Log.d(TAG, "take_photo?: " + take_photo);
 
             setCameraDisplayOrientation();
-            new OrientationEventListener(activity) {
-                @Override
-                public void onOrientationChanged(int orientation) {
-                    Preview.this.onOrientationChanged(orientation);
-                }
-            }.enable();
+
             if( MyDebug.LOG ) {
                 Log.d(TAG, "openCamera: time after setting orientation: " + (System.currentTimeMillis() - debug_time));
             }
@@ -1082,7 +1076,7 @@ public class Preview implements SurfaceHolder.Callback, TextureView.SurfaceTextu
 		// must be done before setting flash modes, as we may remove flash modes if in manual mode
 		if( MyDebug.LOG )
 			Log.d(TAG, "set up iso");
-		String value = applicationInterface.getISOPref();
+		String value = "100";
 		if( MyDebug.LOG )
 			Log.d(TAG, "saved iso: " + value);
 		boolean is_manual_iso = false;
@@ -1266,7 +1260,7 @@ public class Preview implements SurfaceHolder.Callback, TextureView.SurfaceTextu
 			int image_quality = applicationInterface.getImageQualityPref();
 			if( MyDebug.LOG )
 				Log.d(TAG, "set up jpeg quality: " + image_quality);
-			camera_controller.setJpegQuality(image_quality);
+			camera_controller.setJpegQuality(100);
 		}
 		if( MyDebug.LOG ) {
 			Log.d(TAG, "setupCameraParameters: time after jpeg quality: " + (System.currentTimeMillis() - debug_time));
@@ -1831,105 +1825,8 @@ public class Preview implements SurfaceHolder.Callback, TextureView.SurfaceTextu
 		}
 	}
 
-    // for taking photos - from http://developer.android.com/reference/android/hardware/Camera.Parameters.html#setRotation(int)
-    private void onOrientationChanged(int orientation) {
-		/*if( MyDebug.LOG ) {
-			Log.d(TAG, "onOrientationChanged()");
-			Log.d(TAG, "orientation: " + orientation);
-		}*/
-        if( orientation == OrientationEventListener.ORIENTATION_UNKNOWN )
-            return;
-        if( camera_controller == null ) {
-			/*if( MyDebug.LOG )
-				Log.d(TAG, "camera not opened!");*/
-            return;
-        }
-        orientation = (orientation + 45) / 90 * 90;
-        this.current_orientation = orientation % 360;
-        int new_rotation;
-        int camera_orientation = camera_controller.getCameraOrientation();
-        if( camera_controller.isFrontFacing() ) {
-            new_rotation = (camera_orientation - orientation + 360) % 360;
-        }
-        else {
-            new_rotation = (camera_orientation + orientation) % 360;
-        }
-        if( new_rotation != current_rotation ) {
-			/*if( MyDebug.LOG ) {
-				Log.d(TAG, "    current_orientation is " + current_orientation);
-				Log.d(TAG, "    info orientation is " + camera_orientation);
-				Log.d(TAG, "    set Camera rotation from " + current_rotation + " to " + new_rotation);
-			}*/
-            this.current_rotation = new_rotation;
-        }
-    }
-
     private int getDeviceDefaultOrientation() {
-	    WindowManager windowManager = (WindowManager)this.getContext().getSystemService(Context.WINDOW_SERVICE);
-	    Configuration config = getResources().getConfiguration();
-	    int rotation = windowManager.getDefaultDisplay().getRotation();
-	    if( ( (rotation == Surface.ROTATION_0 || rotation == Surface.ROTATION_180) &&
-	    		config.orientation == Configuration.ORIENTATION_LANDSCAPE )
-	    		|| ( (rotation == Surface.ROTATION_90 || rotation == Surface.ROTATION_270) &&
-	            config.orientation == Configuration.ORIENTATION_PORTRAIT ) ) {
-	    	return Configuration.ORIENTATION_LANDSCAPE;
-	    }
-	    else {
-	    	return Configuration.ORIENTATION_PORTRAIT;
-	    }
-	}
-
-	/* Returns the rotation (in degrees) to use for images/videos, taking the preference_lock_orientation into account.
-	 */
-	private int getImageVideoRotation() {
-		if( MyDebug.LOG )
-			Log.d(TAG, "getImageVideoRotation() from current_rotation " + current_rotation);
-		String lock_orientation = applicationInterface.getLockOrientationPref();
-		if( lock_orientation.equals("landscape") ) {
-			int camera_orientation = camera_controller.getCameraOrientation();
-		    int device_orientation = getDeviceDefaultOrientation();
-		    int result;
-		    if( device_orientation == Configuration.ORIENTATION_PORTRAIT ) {
-		    	// should be equivalent to onOrientationChanged(270)
-			    if( camera_controller.isFrontFacing() ) {
-			    	result = (camera_orientation + 90) % 360;
-			    }
-			    else {
-			    	result = (camera_orientation + 270) % 360;
-			    }
-		    }
-		    else {
-		    	// should be equivalent to onOrientationChanged(0)
-		    	result = camera_orientation;
-		    }
-			if( MyDebug.LOG )
-				Log.d(TAG, "getImageVideoRotation() lock to landscape, returns " + result);
-		    return result;
-		}
-		else if( lock_orientation.equals("portrait") ) {
-			int camera_orientation = camera_controller.getCameraOrientation();
-		    int result;
-		    int device_orientation = getDeviceDefaultOrientation();
-		    if( device_orientation == Configuration.ORIENTATION_PORTRAIT ) {
-		    	// should be equivalent to onOrientationChanged(0)
-		    	result = camera_orientation;
-		    }
-		    else {
-		    	// should be equivalent to onOrientationChanged(90)
-			    if( camera_controller.isFrontFacing() ) {
-			    	result = (camera_orientation + 270) % 360;
-			    }
-			    else {
-			    	result = (camera_orientation + 90) % 360;
-			    }
-		    }
-			if( MyDebug.LOG )
-				Log.d(TAG, "getImageVideoRotation() lock to portrait, returns " + result);
-		    return result;
-		}
-		if( MyDebug.LOG )
-			Log.d(TAG, "getImageVideoRotation() returns current_rotation " + current_rotation);
-		return this.current_rotation;
+		return Configuration.ORIENTATION_PORTRAIT;
 	}
 
 	public void draw(Canvas canvas) {
@@ -2899,7 +2796,7 @@ public class Preview implements SurfaceHolder.Callback, TextureView.SurfaceTextu
     	    }
 		};
     	{
-    		camera_controller.setRotation(getImageVideoRotation());
+    		camera_controller.setRotation(90);
 
         	camera_controller.enableShutterSound(false);
 			if( using_android_l ) {

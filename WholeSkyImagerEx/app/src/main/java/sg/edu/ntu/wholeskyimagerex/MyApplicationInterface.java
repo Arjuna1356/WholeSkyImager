@@ -38,7 +38,6 @@ public class MyApplicationInterface implements ApplicationInterface {
     
 	private final MainActivity main_activity;
 	private final LocationSupplier locationSupplier;
-	private final GyroSensor gyroSensor;
 	private final StorageUtils storageUtils;
 	private final ImageSaver imageSaver;
 
@@ -81,7 +80,6 @@ public class MyApplicationInterface implements ApplicationInterface {
 		this.locationSupplier = new LocationSupplier(main_activity);
 		if( MyDebug.LOG )
 			Log.d(TAG, "MyApplicationInterface: time after creating location supplier: " + (System.currentTimeMillis() - debug_time));
-		this.gyroSensor = new GyroSensor(main_activity);
 		this.storageUtils = new StorageUtils(main_activity);
 		if( MyDebug.LOG )
 			Log.d(TAG, "MyApplicationInterface: time after creating storage utils: " + (System.currentTimeMillis() - debug_time));
@@ -136,10 +134,6 @@ public class MyApplicationInterface implements ApplicationInterface {
 
 	LocationSupplier getLocationSupplier() {
 		return locationSupplier;
-	}
-
-	public GyroSensor getGyroSensor() {
-		return gyroSensor;
 	}
 	
 	StorageUtils getStorageUtils() {

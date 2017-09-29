@@ -76,11 +76,6 @@
     <PreferenceCategory android:title="Debugging">
         <SwitchPreference
             android:defaultValue="false"
-            android:key="debugLogging"
-            android:summary="Enable Log Output through ADB."
-            android:title="Logging"/>
-        <SwitchPreference
-            android:defaultValue="false"
             android:key="debugKeepfiles"
             android:summary="Keep a copy of each image on the internal storage."
             android:title="Keep Files"/>
