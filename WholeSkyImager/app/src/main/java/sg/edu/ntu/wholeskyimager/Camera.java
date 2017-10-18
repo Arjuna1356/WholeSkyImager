@@ -41,6 +41,8 @@ import java.util.Arrays;
 import java.util.Date;
 import java.util.List;
 
+import static android.util.Log.d;
+
 /**
  * Created by Jonathan on 26/8/2017.
  */
@@ -68,8 +70,12 @@ public class Camera
     private int isoVal = 100;
     private int mSensorOrientation = 0;
 
+    private WSIServerClient serverClient = null;
+
     private static final SparseIntArray ORIENTATIONS = new SparseIntArray();
-    static {
+
+    static
+    {
         ORIENTATIONS.append(Surface.ROTATION_0, 90);
         ORIENTATIONS.append(Surface.ROTATION_90, 0);
         ORIENTATIONS.append(Surface.ROTATION_180, 270);
@@ -81,6 +87,7 @@ public class Camera
         this.mainActivity = activity;
         this.wahrsisModelNr = mainActivity.getWahrsisModelNr();
         this.tvEventLog = mainActivity.getTvEventLog();
+        this.serverClient = mainActivity.getServerClient();
     }
 
     public void setHandler(Handler handler)
@@ -203,11 +210,10 @@ public class Camera
             captureBuilder.set(CaptureRequest.CONTROL_CAPTURE_INTENT, CaptureRequest.CONTROL_CAPTURE_INTENT_STILL_CAPTURE);
             captureBuilder.addTarget(reader.getSurface());
 
-            if(afEnabled)
+            if (afEnabled)
             {
                 captureBuilder.set(CaptureRequest.CONTROL_MODE, CameraMetadata.CONTROL_MODE_AUTO);
-            }
-            else
+            } else
             {
                 captureBuilder.set(CaptureRequest.CONTROL_AF_MODE, CameraMetadata.CONTROL_AF_MODE_OFF);
                 captureBuilder.set(CaptureRequest.LENS_FOCUS_DISTANCE, minimumFocusDist);
@@ -221,9 +227,7 @@ public class Camera
             int rotation = mainActivity.getWindowManager().getDefaultDisplay().getRotation();
             captureBuilder.set(CaptureRequest.JPEG_ORIENTATION, getOrientation(rotation));
 
-            String timeStampNew = null;
-
-            timeStampNew = new SimpleDateFormat("yyyy-MM-dd-HH-mm-ss").format(new Date());
+            final String timeStampNew = new SimpleDateFormat("yyyy-MM-dd-HH-mm-ss").format(new Date());
 
             String fileName = timeStampNew + "-wahrsis" + wahrsisModelNr + "-" + "normal" + ".jpg";
 
@@ -285,6 +289,16 @@ public class Camera
                     super.onCaptureCompleted(session, request, result);
                     Toast.makeText(mainActivity, "Saved:" + file, Toast.LENGTH_SHORT).show();
                     createCameraPreview();
+
+                    if (serverClient.isConnected())
+                    {
+                        // post image series (Low, Med, High EV) to specific URL and receive HTTP Status Code
+                        int responseCode = serverClient.httpPOST(timeStampNew, wahrsisModelNr);
+                        d(TAG, "POST execution finished. Response code: " + responseCode);
+                    } else
+                    {
+                        d(TAG, "POST Execution not possible. No connection to internet.");
+                    }
                 }
             };
 
@@ -345,7 +359,8 @@ public class Camera
      * @param rotation The screen rotation.
      * @return The JPEG orientation (one of 0, 90, 270, and 360)
      */
-    private int getOrientation(int rotation) {
+    private int getOrientation(int rotation)
+    {
         // Sensor orientation is 90 for most devices, or 270 for some devices (eg. Nexus 5X)
         // We have to take that into account and rotate JPEG properly.
         // For devices with orientation of 90, we simply return our mapping from ORIENTATIONS.
@@ -451,23 +466,21 @@ public class Camera
             }, null);
 
             Float minimum_focus_distance = characteristics.get(CameraCharacteristics.LENS_INFO_MINIMUM_FOCUS_DISTANCE); // may be null on some devices
-            if( minimum_focus_distance != null )
+            if (minimum_focus_distance != null)
             {
                 minimumFocusDist = minimum_focus_distance;
-            }
-            else
+            } else
             {
                 minimumFocusDist = 0.0f;
             }
 
             afEnabled = mainActivity.getAFEnabled();
 
-            if(afEnabled)
+            if (afEnabled)
             {
                 captureRequestBuilder.set(CaptureRequest.CONTROL_MODE, CameraMetadata.CONTROL_MODE_AUTO);
                 tvEventLog.append("\nPreviewing AF");
-            }
-            else
+            } else
             {
                 captureRequestBuilder.set(CaptureRequest.CONTROL_AF_MODE, CameraMetadata.CONTROL_AF_MODE_OFF);
                 captureRequestBuilder.set(CaptureRequest.LENS_FOCUS_DISTANCE, minimumFocusDist);

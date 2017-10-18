@@ -6,6 +6,7 @@ import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.pm.ActivityInfo;
 
+import android.graphics.Color;
 import android.graphics.drawable.ColorDrawable;
 import android.os.Build;
 import android.preference.PreferenceManager;
@@ -38,6 +39,8 @@ import android.util.Log;
 import java.util.Date;
 import java.util.concurrent.RunnableFuture;
 
+import static android.util.Log.d;
+
 public class MainActivity extends AppCompatActivity
 {
     private final int REQUEST_CAMERA_PERMISSION = 200;
@@ -56,9 +59,13 @@ public class MainActivity extends AppCompatActivity
     private FrameLayout frameLayout = null;
     private TextView tvEventLog = null;
     private TextView tvStatusInfo = null;
+    private TextView tvConnectionStatus = null;
 
     private HandlerThread mBackgroundThread = null;
     private Handler mBackgroundHandler = null;
+
+    private String authorizationToken;
+    WSIServerClient serverClient;
 
     @Override
     protected void onCreate(Bundle savedInstanceState)
@@ -191,6 +198,11 @@ public class MainActivity extends AppCompatActivity
         return afEnabled;
     }
 
+    public WSIServerClient getServerClient ()
+    {
+        return serverClient;
+    }
+
     private void startBackgroundThread()
     {
         mBackgroundThread = new HandlerThread("Camera Background");
@@ -227,6 +239,8 @@ public class MainActivity extends AppCompatActivity
 
         tvStatusInfo = (TextView) findViewById(R.id.tvStatusInfo);
         tvStatusInfo.setText("idle");
+
+        tvConnectionStatus  = (TextView) findViewById(R.id.tvConnectionStatus);
 
         camera = new Camera(this);
 
@@ -267,6 +281,10 @@ public class MainActivity extends AppCompatActivity
                 stopImaging();
             }
         });
+
+        // initiate server client
+        serverClient = new WSIServerClient(this, "https://www.visuo.adsc.com.sg/api/skypicture/", authorizationToken);
+        checkNetworkStatus();
     }
 
     private void checkPermissions()
@@ -306,6 +324,21 @@ public class MainActivity extends AppCompatActivity
             tvEventLog.append("\nImaging Stopped");
 
             camera.closeCamera(frameLayout);
+        }
+    }
+
+    private void checkNetworkStatus() {
+        // check internet connection
+        if (serverClient.isConnected()) {
+            tvConnectionStatus.setText("online");
+            tvConnectionStatus.setTextColor(getResources().getColor(R.color.darkGreen));
+            d(TAG, "Device is online.");
+            tvEventLog.append("\nDevice is online.");
+        } else {
+            tvConnectionStatus.setText("offline");
+            tvConnectionStatus.setTextColor(Color.BLACK);
+            d(TAG, "Device is offline.");
+            tvEventLog.append("\nDevice is offline.");
         }
     }
 
