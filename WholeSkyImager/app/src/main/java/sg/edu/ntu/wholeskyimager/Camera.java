@@ -229,7 +229,7 @@ public class Camera
 
             final String timeStampNew = new SimpleDateFormat("yyyy-MM-dd-HH-mm-ss").format(new Date());
 
-            String fileName = timeStampNew + "-wahrsis" + wahrsisModelNr + "-" + "normal" + ".jpg";
+            String fileName = timeStampNew + "-wahrsis" + wahrsisModelNr + ".jpg";
 
             final File file = getOutputMediaFile(fileName);
 
@@ -293,8 +293,8 @@ public class Camera
                     if (serverClient.isConnected())
                     {
                         // post image series (Low, Med, High EV) to specific URL and receive HTTP Status Code
-                        int responseCode = serverClient.httpPOST(timeStampNew, wahrsisModelNr);
-                        d(TAG, "POST execution finished. Response code: " + responseCode);
+                        serverClient.httpPOST(timeStampNew, wahrsisModelNr);
+
                     } else
                     {
                         d(TAG, "POST Execution not possible. No connection to internet.");

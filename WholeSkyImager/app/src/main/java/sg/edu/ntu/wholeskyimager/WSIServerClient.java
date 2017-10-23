@@ -21,6 +21,7 @@ import java.io.FileNotFoundException;
 import cz.msebera.android.httpclient.Header;
 
 import static android.content.ContentValues.TAG;
+import static android.util.Log.d;
 
 /**
  * Created by Julian on 30.11.2016.
@@ -36,7 +37,8 @@ public class WSIServerClient
 
 
     //WSIServerClient constructor
-    public WSIServerClient(Context mContext, String url, String token) {
+    public WSIServerClient(Context mContext, String url, String token)
+    {
         this.mContext = mContext;
         clientUrl = url;
         // this enables to bypass the permission issue
@@ -48,11 +50,13 @@ public class WSIServerClient
         Log.d(TAG, "AsyncHttpClient succesfully created.");
     }
 
-    /** Connection verifier
+    /**
+     * Connection verifier
      *
      * @return connection status
      */
-    public boolean isConnected() {
+    public boolean isConnected()
+    {
         ConnectivityManager connMgr = (ConnectivityManager) mContext.getSystemService(Activity.CONNECTIVITY_SERVICE);
         NetworkInfo networkInfo = connMgr.getActiveNetworkInfo();
         if (networkInfo != null && networkInfo.isConnected())
@@ -61,78 +65,110 @@ public class WSIServerClient
             return false;
     }
 
-    /** POST Method
+    /**
+     * POST Method
      *
      * @param timeStamp
      * @param wahrsisModelNr
      * @return Status Code
      */
-    public int httpPOST(String timeStamp, int wahrsisModelNr) {
+    public void httpPOST(String timeStamp, int wahrsisModelNr)
+    {
         //file management
         String filePath = Environment.getExternalStorageDirectory().getPath() + "/WSI/";
 
         //prepare files to upload (normal image, low, med, high ev photo)
-        File imageFileLow = new File(filePath+timeStamp+"-wahrsis" + wahrsisModelNr + "-low" + ".jpg");
-        File imageFileMed = new File(filePath+timeStamp+"-wahrsis" + wahrsisModelNr + "-med" + ".jpg");
-        File imageFileHigh = new File(filePath+timeStamp+"-wahrsis" + wahrsisModelNr + "-high" + ".jpg");
+//        File imageFileLow = new File(filePath+timeStamp+"-wahrsis" + wahrsisModelNr + "-low" + ".jpg");
+//        File imageFileMed = new File(filePath+timeStamp+"-wahrsis" + wahrsisModelNr + "-med" + ".jpg");
+//        File imageFileHigh = new File(filePath+timeStamp+"-wahrsis" + wahrsisModelNr + "-high" + ".jpg");
+
+        File imageFile = new File(filePath + timeStamp + "-wahrsis" + wahrsisModelNr + ".jpg");
 
         //create object that contains the images
         RequestParams params = new RequestParams();
-        try {
-            params.put("imageLow", imageFileLow);
-            params.put("imageMed", imageFileMed);
-            params.put("imageHigh", imageFileHigh);
+        try
+        {
+//            params.put("imageLow", imageFileLow);
+//            params.put("imageMed", imageFileMed);
+//            params.put("imageHigh", imageFileHigh);
+            params.put("image", imageFile);
 
-        } catch(FileNotFoundException e) {
-            Log.d(TAG, "Could not find file " + imageFileLow + " and others (med, high).");
+        } catch (FileNotFoundException e)
+        {
+            Log.d(TAG, "Could not find file " + imageFile + " and others (med, high).");
         }
 
-        client.post(clientUrl, params, new JsonHttpResponseHandler() {
+        client.post(clientUrl, params, new JsonHttpResponseHandler()
+        {
             @Override
-            public void onSuccess(int statusCode, Header[] headers, JSONObject response) {
-                Log.d(TAG, "AsyncHttpClient onSuccess onSuccess, got JSON Object: " + response.toString());
+            public void onSuccess(int statusCode, Header[] headers, JSONObject response)
+            {
                 Log.d(TAG, "Http Status Code: " + statusCode);
-                httpStatusCode = statusCode;
+
+                if (response != null)
+                {
+                    Log.d(TAG, "AsyncHttpClient onSuccess onSuccess, got JSON Object: " + response.toString());
+                }
+
+                Log.d(TAG, "POST execution finished. Response code: " + statusCode);
             }
 
             @Override
-            public void onSuccess(int statusCode, Header[] headers, JSONArray responseArray) {
-                Log.d(TAG, "AsyncHttpClient onSuccess. Received JSON Array. Content: " + responseArray.toString());
+            public void onSuccess(int statusCode, Header[] headers, JSONArray responseArray)
+            {
                 Log.d(TAG, "Http Status Code: " + statusCode);
-                httpStatusCode = statusCode;
-                httpResponseArray = responseArray;
+
+                if (responseArray != null)
+                {
+                    Log.d(TAG, "AsyncHttpClient onSuccess. Received JSON Array. Content: " + responseArray.toString());
+
+                    httpResponseArray = responseArray;
+                }
+
+                Log.d(TAG, "POST execution finished. Response code: " + statusCode);
             }
 
             @Override
-            public void onFailure(int statusCode, Header[] headers, Throwable e, JSONObject response) {
+            public void onFailure(int statusCode, Header[] headers, Throwable e, JSONObject response)
+            {
                 Log.d(TAG, "AsyncHttpClient Failure. Status Code: " + statusCode);
-                Log.d(TAG, "Response JSON: " + response.toString());
-                httpStatusCode = statusCode;
+
+                if (response != null)
+                {
+                    Log.d(TAG, "Response JSON: " + response.toString());
+                }
+
+                Log.d(TAG, "POST execution failure. Response code: " + statusCode);
             }
 
             @Override
-            public void onFailure(int statusCode, Header[] headers, String response, Throwable e) {
+            public void onFailure(int statusCode, Header[] headers, String response, Throwable e)
+            {
                 Log.d(TAG, "AsyncHttpClient Failure. Status Code: " + statusCode);
+
                 Log.d(TAG, "Response: " + response);
-                httpStatusCode = statusCode;
+
+                Log.d(TAG, "POST execution failure. Response code: " + statusCode);
             }
         });
-
-        return httpStatusCode;
     }
 
 
-    public int httpGET() {
-        client.get(clientUrl, new JsonHttpResponseHandler() {
+    public int httpGET()
+    {
+        client.get(clientUrl, new JsonHttpResponseHandler()
+        {
             @Override
-            public void onSuccess(int statusCode, Header[] headers, JSONObject response) {
+            public void onSuccess(int statusCode, Header[] headers, JSONObject response)
+            {
                 Log.d(TAG, "onSuccess, got JSON Object");
                 Log.d(TAG, "Http Status Code: " + statusCode);
                 httpStatusCode = statusCode;
             }
 
             @Override
-            public void onSuccess(int statusCode, Header[] headers, JSONArray responseArray) {
+            public void onSuccess(int statusCode, Header[] headers, JSONArray responseArray)
+            {
                 Log.d(TAG, "AsyncHttpClient onSuccess. Received JSON Array. Content: " + responseArray.toString());
                 Log.d(TAG, "Http Status Code: " + statusCode);
                 httpStatusCode = statusCode;
@@ -140,14 +176,16 @@ public class WSIServerClient
             }
 
             @Override
-            public void onFailure(int statusCode, Header[] headers, Throwable e, JSONObject response) {
+            public void onFailure(int statusCode, Header[] headers, Throwable e, JSONObject response)
+            {
                 Log.d(TAG, "AsyncHttpClient Failure. Status Code: " + statusCode);
                 Log.d(TAG, "Response JSON: " + response.toString());
                 httpStatusCode = statusCode;
             }
 
             @Override
-            public void onFailure(int statusCode, Header[] headers, String response, Throwable e) {
+            public void onFailure(int statusCode, Header[] headers, String response, Throwable e)
+            {
                 Log.d(TAG, "AsyncHttpClient Failure. Status Code: " + statusCode);
                 httpStatusCode = statusCode;
             }

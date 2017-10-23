@@ -242,8 +242,6 @@ public class MainActivity extends AppCompatActivity
 
         tvConnectionStatus  = (TextView) findViewById(R.id.tvConnectionStatus);
 
-        camera = new Camera(this);
-
         runButton = (Button) findViewById(R.id.buttonRun);
         assert runButton != null;
         runButton.setTag(0);
@@ -285,6 +283,8 @@ public class MainActivity extends AppCompatActivity
         // initiate server client
         serverClient = new WSIServerClient(this, "https://www.visuo.adsc.com.sg/api/skypicture/", authorizationToken);
         checkNetworkStatus();
+
+        camera = new Camera(this);
     }
 
     private void checkPermissions()
