@@ -13,6 +13,7 @@ import android.content.SharedPreferences;
 import android.content.pm.ActivityInfo;
 import android.content.pm.PackageManager;
 
+import android.graphics.Color;
 import android.graphics.drawable.ColorDrawable;
 
 import android.os.Build;
@@ -54,6 +55,8 @@ import java.util.Locale;
 import sg.edu.ntu.wholeskyimagerex.CameraController.CameraControllerManager2;
 import sg.edu.ntu.wholeskyimagerex.Preview.Preview;
 
+import static android.util.Log.d;
+
 public class MainActivity extends AppCompatActivity
 {
     private int wahrsisModelNr = 6;
@@ -70,6 +73,7 @@ public class MainActivity extends AppCompatActivity
     private FrameLayout frameLayout;
     private TextView tvEventLog;
     private TextView tvStatusInfo;
+    private TextView tvConnectionStatus = null;
 
     private HandlerThread mBackgroundThread;
     private Handler mBackgroundHandler;
@@ -84,6 +88,9 @@ public class MainActivity extends AppCompatActivity
     final private int MY_PERMISSIONS_REQUEST_CAMERA = 0;
     final private int MY_PERMISSIONS_REQUEST_RECORD_AUDIO = 1;
     final private int MY_PERMISSIONS_REQUEST_LOCATION = 2;
+
+    private String authorizationToken;
+    private WSIServerClient serverClient;
 
     @Override
     protected void onCreate(Bundle savedInstanceState)
@@ -401,6 +408,8 @@ public class MainActivity extends AppCompatActivity
         tvStatusInfo = (TextView) findViewById(R.id.tvStatusInfo);
         tvStatusInfo.setText("idle");
 
+        tvConnectionStatus  = (TextView) findViewById(R.id.tvConnectionStatus);
+
         runButton = (Button) findViewById(R.id.buttonRun);
         assert runButton != null;
         runButton.setTag(0);
@@ -467,6 +476,10 @@ public class MainActivity extends AppCompatActivity
         }
 
         setSaveLocation();
+
+        // initiate server client
+        serverClient = new WSIServerClient(this, "https://www.visuo.adsc.com.sg/api/skypicture/", authorizationToken);
+        checkNetworkStatus();
     }
 
     /* This method sets the preference defaults which are set specific for a particular device.
@@ -736,6 +749,26 @@ public class MainActivity extends AppCompatActivity
         if (status == 1)
         {
             tvEventLog.append("\nImage Capture Done");
+        }
+    }
+
+    public WSIServerClient getServerClient ()
+    {
+        return serverClient;
+    }
+
+    private void checkNetworkStatus() {
+        // check internet connection
+        if (serverClient.isConnected()) {
+            tvConnectionStatus.setText("online");
+            tvConnectionStatus.setTextColor(getResources().getColor(R.color.darkGreen));
+            d(TAG, "Device is online.");
+            tvEventLog.append("\nDevice is online.");
+        } else {
+            tvConnectionStatus.setText("offline");
+            tvConnectionStatus.setTextColor(Color.BLACK);
+            d(TAG, "Device is offline.");
+            tvEventLog.append("\nDevice is offline.");
         }
     }
 

@@ -38,7 +38,9 @@ import android.view.Display;
 import android.view.Surface;
 import android.view.SurfaceHolder;
 
+import sg.edu.ntu.wholeskyimagerex.MainActivity;
 import sg.edu.ntu.wholeskyimagerex.MyDebug;
+import sg.edu.ntu.wholeskyimagerex.WSIServerClient;
 
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
@@ -137,6 +139,8 @@ public class CameraController2 extends CameraController {
 	/*private boolean capture_result_has_focus_distance;
 	private float capture_result_focus_distance_min;
 	private float capture_result_focus_distance_max;*/
+
+	private WSIServerClient serverClient = null;
 	
 	private enum RequestTag {
 		CAPTURE
@@ -620,6 +624,9 @@ public class CameraController2 extends CameraController {
 		thread = new HandlerThread("CameraBackground");
 		thread.start(); 
 		handler = new Handler(thread.getLooper());
+
+		MainActivity mainActivity = (MainActivity) context;
+		this.serverClient = mainActivity.getServerClient();
 
 		final CameraManager manager = (CameraManager)context.getSystemService(Context.CAMERA_SERVICE);
 

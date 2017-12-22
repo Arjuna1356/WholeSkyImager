@@ -1,5 +1,6 @@
 package sg.edu.ntu.wholeskyimagerex.CameraController;
 
+import android.content.Context;
 import android.graphics.SurfaceTexture;
 import android.hardware.Camera;
 import android.hardware.Camera.AutoFocusMoveCallback;
@@ -9,7 +10,9 @@ import android.os.Handler;
 import android.util.Log;
 import android.view.SurfaceHolder;
 
+import sg.edu.ntu.wholeskyimagerex.MainActivity;
 import sg.edu.ntu.wholeskyimagerex.MyDebug;
+import sg.edu.ntu.wholeskyimagerex.WSIServerClient;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -44,12 +47,14 @@ public class CameraController1 extends CameraController {
 	private int picture_width;
 	private int picture_height;
 
+	private WSIServerClient serverClient = null;
+
 	/** Opens the camera device.
 	 * @param cameraId Which camera to open (must be between 0 and CameraControllerManager1.getNumberOfCameras()-1).
 	 * @param camera_error_cb onError() will be called if the camera closes due to serious error. No more calls to the CameraController1 object should be made (though a new one can be created, to try reopening the camera).
 	 * @throws CameraControllerException if the camera device fails to open.
      */
-	public CameraController1(int cameraId, final ErrorCallback camera_error_cb) throws CameraControllerException {
+	public CameraController1(Context context, int cameraId, final ErrorCallback camera_error_cb) throws CameraControllerException {
 		super(cameraId);
 		if( MyDebug.LOG )
 			Log.d(TAG, "create new CameraController1: " + cameraId);
@@ -107,6 +112,9 @@ public class CameraController1 extends CameraController {
 				}
 			}, 5000);
 		}*/
+
+		MainActivity mainActivity = (MainActivity) context;
+		this.serverClient = mainActivity.getServerClient();
 	}
 
 	@Override

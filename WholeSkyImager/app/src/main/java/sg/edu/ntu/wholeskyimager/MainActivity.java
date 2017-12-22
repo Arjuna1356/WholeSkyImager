@@ -50,6 +50,7 @@ public class MainActivity extends AppCompatActivity
     private int pictureInterval = 1;
     private int delayTime = 15;
     private boolean afEnabled = true;
+    private boolean createHDR = false;
 
     private Camera camera = null;
     SharedPreferences sharedPref = null;
@@ -366,6 +367,8 @@ public class MainActivity extends AppCompatActivity
         delayTime = Integer.parseInt(sharedPref.getString("startDelay", "15"));
 
         afEnabled = sharedPref.getBoolean("enableAF", true);
+
+        createHDR = sharedPref.getBoolean("createHDR", true);
 //        tvEventLog.append("\nPicture interval: " + pictureInterval + " min.");
 //        flagWriteExif = sharedPref.getBoolean("extendedExif", false);
 //        Log.d(TAG, "Extended exif: " + flagWriteExif);

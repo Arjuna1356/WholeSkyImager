@@ -67,6 +67,8 @@ public class ImageSaver extends Thread
 	private int n_images_to_save = 0;
 	private final BlockingQueue<Request> queue = new ArrayBlockingQueue<>(1); // since we remove from the queue and then process in the saver thread, in practice the number of background photos - including the one being processed - is one more than the length of this queue
 
+	public String[] evState = {"MED","LOW","HIGH"};
+
 	private static class Request {
 		enum Type {
 			JPEG,
@@ -88,6 +90,7 @@ public class ImageSaver extends Thread
 		final boolean using_camera2;
 		final int image_quality;
 		final Date current_date;
+        final String timeStamp;
 		final String preference_stamp;
 		final String preference_textstamp;
 		final int font_size;
@@ -107,7 +110,7 @@ public class ImageSaver extends Thread
                 DngCreator dngCreator, Image image,
                 boolean image_capture_intent, Uri image_capture_intent_uri,
                 boolean using_camera2, int image_quality,
-                Date current_date,
+                Date current_date, String timeStamp,
                 String preference_stamp, String preference_textstamp, int font_size, int color, String pref_style, String preference_stamp_dateformat, String preference_stamp_timeformat, String preference_stamp_gpsformat,
                 boolean store_location, Location location,
                 int sample_factor) {
@@ -122,6 +125,7 @@ public class ImageSaver extends Thread
 			this.using_camera2 = using_camera2;
 			this.image_quality = image_quality;
 			this.current_date = current_date;
+            this.timeStamp = timeStamp;
 			this.preference_stamp = preference_stamp;
 			this.preference_textstamp = preference_textstamp;
 			this.font_size = font_size;
@@ -219,7 +223,7 @@ public class ImageSaver extends Thread
                           List<byte []> images,
                           boolean image_capture_intent, Uri image_capture_intent_uri,
                           boolean using_camera2, int image_quality,
-                          Date current_date,
+                          Date current_date, String timeStamp,
                           String preference_stamp, String preference_textstamp, int font_size, int color, String pref_style, String preference_stamp_dateformat, String preference_stamp_timeformat, String preference_stamp_gpsformat,
                           boolean store_location, Location location,
                           int sample_factor) {
@@ -235,7 +239,7 @@ public class ImageSaver extends Thread
 				null, null,
 				image_capture_intent, image_capture_intent_uri,
 				using_camera2, image_quality,
-				current_date,
+				current_date, timeStamp,
 				preference_stamp, preference_textstamp, font_size, color, pref_style, preference_stamp_dateformat, preference_stamp_timeformat, preference_stamp_gpsformat,
 				store_location, location,
 				sample_factor);
@@ -250,7 +254,7 @@ public class ImageSaver extends Thread
                               DngCreator dngCreator, Image image,
                               boolean image_capture_intent, Uri image_capture_intent_uri,
                               boolean using_camera2, int image_quality,
-                              Date current_date,
+                              Date current_date, String timeStamp,
                               String preference_stamp, String preference_textstamp, int font_size, int color, String pref_style, String preference_stamp_dateformat, String preference_stamp_timeformat, String preference_stamp_gpsformat,
                               boolean store_location, Location location,
                               int sample_factor) {
@@ -269,7 +273,7 @@ public class ImageSaver extends Thread
 				dngCreator, image,
 				image_capture_intent, image_capture_intent_uri,
 				using_camera2, image_quality,
-				current_date,
+				current_date, timeStamp,
 				preference_stamp, preference_textstamp, font_size, color, pref_style, preference_stamp_dateformat, preference_stamp_timeformat, preference_stamp_gpsformat,
 				store_location, location,
 				sample_factor);
@@ -290,7 +294,7 @@ public class ImageSaver extends Thread
 					null, null,
 					false, null,
 					false, 0,
-					null,
+					null, null,
 					null, null, 0, 0, null, null, null, null,
 					false, null,
 					1);
@@ -533,7 +537,7 @@ public class ImageSaver extends Thread
 				for(int i=0;i<request.jpeg_images.size();i++) {
 					// note, even if one image fails, we still try saving the other images - might as well give the user as many images as we can...
 					byte [] image = request.jpeg_images.get(i);
-					String filename_suffix = "_EXP" + i;
+					String filename_suffix = "-" + evState[i];
 					// don't update the thumbnails, only do this for the final HDR image - so user doesn't think it's complete, click gallery, then wonder why the final image isn't there
 					// also don't mark these images as being shared
 					if( !saveSingleImageNow(request, image, null, filename_suffix, false, false) ) {
@@ -611,7 +615,7 @@ public class ImageSaver extends Thread
 			int base_image_id = ((request.jpeg_images.size()-1)/2);
 			if( MyDebug.LOG )
 				Log.d(TAG, "base_image_id: " + base_image_id);
-			String suffix = request.jpeg_images.size() == 1 ? "_DRO" : "_HDR";
+			String suffix = request.jpeg_images.size() == 1 ? "-DRO" : "-HDR";
 			success = saveSingleImageNow(request, request.jpeg_images.get(base_image_id), hdr_bitmap, suffix, true, true);
 			if( MyDebug.LOG && !success )
 				Log.e(TAG, "saveSingleImageNow failed for hdr image");
@@ -791,6 +795,7 @@ public class ImageSaver extends Thread
 		final boolean image_capture_intent = request.image_capture_intent;
 		final boolean using_camera2 = request.using_camera2;
 		final Date current_date = request.current_date;
+        final String timeStamp = request.timeStamp;
 		final boolean store_location = request.store_location;
 
         boolean success = false;
@@ -915,10 +920,10 @@ public class ImageSaver extends Thread
     			}
 			}
 			else if( storageUtils.isUsingSAF() ) {
-				saveUri = storageUtils.createOutputMediaFileSAF(StorageUtils.MEDIA_TYPE_IMAGE, filename_suffix, "jpg", current_date);
+				saveUri = storageUtils.createOutputMediaFileSAF(StorageUtils.MEDIA_TYPE_IMAGE, filename_suffix, "jpg", current_date, timeStamp);
 			}
 			else {
-    			picFile = storageUtils.createOutputMediaFile(StorageUtils.MEDIA_TYPE_IMAGE, filename_suffix, "jpg", current_date);
+    			picFile = storageUtils.createOutputMediaFile(StorageUtils.MEDIA_TYPE_IMAGE, filename_suffix, "jpg", current_date, timeStamp);
 	    		if( MyDebug.LOG )
 	    			Log.d(TAG, "save to: " + picFile.getAbsolutePath());
 			}

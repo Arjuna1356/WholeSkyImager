@@ -29,11 +29,16 @@
             android:key="enableAF"
             android:summary="Enable autofocus for imaging."
             android:title="Enable Autofocus"/>
-        <!--<SwitchPreference-->
-            <!--android:defaultValue="false"-->
-            <!--android:key="createHDR"-->
-            <!--android:summary="Enable for HDR image creation on this phone."-->
-            <!--android:title="Create HDR Image"/>-->
+        <SwitchPreference
+            android:defaultValue="false"
+            android:key="createHDR"
+            android:summary="Enable for HDR image creation on this phone."
+            android:title="Create HDR Image"/>
+        <SwitchPreference
+            android:defaultValue="true"
+            android:key="keepImages"
+            android:summary="Keep images after sending to server"
+            android:title="Keep Images"/>
         <!--<SwitchPreference-->
             <!--android:defaultValue="false"-->
             <!--android:key="createRAW"-->
@@ -70,17 +75,11 @@
             <!--android:summary="Necessary for each new WAHRSIS."-->
             <!--android:title="Change Authorization Token"/>-->
     <!--</PreferenceCategory>-->
-
-    <PreferenceCategory android:title="Debugging">
-        <SwitchPreference
-            android:defaultValue="false"
-            android:key="debugLogging"
-            android:summary="Enable Log Output through ADB."
-            android:title="Logging"/>
-        <SwitchPreference
-            android:defaultValue="false"
-            android:key="debugKeepfiles"
-            android:summary="Keep a copy of each image on the internal storage."
-            android:title="Keep Files"/>
-    </PreferenceCategory>
+    <!--<PreferenceCategory android:title="Debugging">-->
+        <!--<SwitchPreference-->
+            <!--android:defaultValue="false"-->
+            <!--android:key="debugLogging"-->
+            <!--android:summary="Enable Log Output through ADB."-->
+            <!--android:title="Logging"/>-->
+    <!--</PreferenceCategory>-->
 </PreferenceScreen>

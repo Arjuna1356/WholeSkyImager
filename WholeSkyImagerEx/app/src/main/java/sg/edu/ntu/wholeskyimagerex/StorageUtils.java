@@ -390,26 +390,28 @@ public class StorageUtils
 		return null;
 	}
 
-	private String createMediaFilename(int type, String suffix, int count, String extension, Date current_date) {
+	private String createMediaFilename(int type, String suffix, int count, String extension, Date current_date, String timeStamp) {
         String index = "";
         if( count > 0 ) {
             index = "_" + count; // try to find a unique filename
         }
 		SharedPreferences sharedPreferences = PreferenceManager.getDefaultSharedPreferences(context);
-		boolean useZuluTime = sharedPreferences.getString(PreferenceKeys.getSaveZuluTimePreferenceKey(), "local").equals("zulu");
-		String timeStamp;
-		if( useZuluTime ) {
-			SimpleDateFormat fmt = new SimpleDateFormat("yyyyMMdd_HHmmss'Z'", Locale.US);
-			fmt.setTimeZone(TimeZone.getTimeZone("UTC"));
-			timeStamp = fmt.format(current_date);
-		}
-		else {
-			timeStamp = new SimpleDateFormat("yyyyMMdd_HHmmss", Locale.US).format(current_date);
-		}
+//		boolean useZuluTime = sharedPreferences.getString(PreferenceKeys.getSaveZuluTimePreferenceKey(), "local").equals("zulu");
+//		String timeStamp;
+//		if( useZuluTime ) {
+//			SimpleDateFormat fmt = new SimpleDateFormat("yyyyMMdd_HHmmss'Z'", Locale.US);
+//			fmt.setTimeZone(TimeZone.getTimeZone("UTC"));
+//			timeStamp = fmt.format(current_date);
+//		}
+//		else {
+//			timeStamp = new SimpleDateFormat("yyyyMMdd_HHmmss", Locale.US).format(current_date);
+//		}
 		String mediaFilename;
         if( type == MEDIA_TYPE_IMAGE ) {
-    		String prefix = sharedPreferences.getString(PreferenceKeys.getSavePhotoPrefixPreferenceKey(), "IMG_");
-    		mediaFilename = prefix + timeStamp + suffix + index + "." + extension;
+//    		String prefix = sharedPreferences.getString(PreferenceKeys.getSavePhotoPrefixPreferenceKey(), "IMG_");
+//    		mediaFilename = prefix + timeStamp + suffix + index + "." + extension;
+            int wahrsisModelNr = Integer.parseInt(sharedPreferences.getString("wahrsisNo", "0"));
+            mediaFilename = timeStamp +"-wahrsis" + wahrsisModelNr + suffix + "." + extension;
         }
         else {
         	// throw exception as this is a programming error
@@ -422,7 +424,7 @@ public class StorageUtils
 
     // only valid if !isUsingSAF()
     @SuppressLint("SimpleDateFormat")
-    File createOutputMediaFile(int type, String suffix, String extension, Date current_date) throws IOException
+    File createOutputMediaFile(int type, String suffix, String extension, Date current_date, String timeStamp) throws IOException
     {
     	File mediaStorageDir = getImageFolder();
 
@@ -439,7 +441,7 @@ public class StorageUtils
         // Create a media file name
         File mediaFile = null;
         for(int count=0;count<100;count++) {
-        	String mediaFilename = createMediaFilename(type, suffix, count, extension, current_date);
+        	String mediaFilename = createMediaFilename(type, suffix, count, extension, current_date, timeStamp);
             mediaFile = new File(mediaStorageDir.getPath() + File.separator + mediaFilename);
             if( !mediaFile.exists() ) {
             	break;
@@ -493,7 +495,7 @@ public class StorageUtils
 
     // only valid if isUsingSAF()
     @TargetApi(Build.VERSION_CODES.LOLLIPOP)
-    Uri createOutputMediaFileSAF(int type, String suffix, String extension, Date current_date) throws IOException
+    Uri createOutputMediaFileSAF(int type, String suffix, String extension, Date current_date, String timeStamp) throws IOException
     {
 		String mimeType;
 		if( type == MEDIA_TYPE_IMAGE ) {
@@ -511,7 +513,7 @@ public class StorageUtils
 			throw new RuntimeException();
 		}
 		// note that DocumentsContract.createDocument will automatically append to the filename if it already exists
-		String mediaFilename = createMediaFilename(type, suffix, 0, extension, current_date);
+		String mediaFilename = createMediaFilename(type, suffix, 0, extension, current_date, timeStamp);
 		return createOutputFileSAF(mediaFilename, mimeType);
     }
 

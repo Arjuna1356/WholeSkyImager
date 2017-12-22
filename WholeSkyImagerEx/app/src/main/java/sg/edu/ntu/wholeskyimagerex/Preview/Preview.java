@@ -3,6 +3,7 @@ package sg.edu.ntu.wholeskyimagerex.Preview;
 import android.Manifest;
 import android.app.Activity;
 import android.content.Context;
+import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.content.res.Configuration;
 import android.content.res.Resources;
@@ -16,6 +17,7 @@ import android.location.Location;
 import android.os.AsyncTask;
 import android.os.Build;
 import android.os.Handler;
+import android.preference.PreferenceManager;
 import android.support.v4.content.ContextCompat;
 import android.util.Log;
 import android.util.Pair;
@@ -44,6 +46,7 @@ import sg.edu.ntu.wholeskyimagerex.R;
 import sg.edu.ntu.wholeskyimagerex.TakePhoto;
 
 import java.text.DecimalFormat;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
@@ -200,7 +203,7 @@ public class Preview implements SurfaceHolder.Callback, TextureView.SurfaceTextu
 				Log.d(TAG, "is_test: " + is_test);
 		}
 
-		this.using_android_l = Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP && applicationInterface.useCamera2();
+		this.using_android_l = (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) && applicationInterface.useCamera2();
 		if( MyDebug.LOG ) {
 			Log.d(TAG, "using_android_l?: " + using_android_l);
 		}
@@ -847,7 +850,7 @@ public class Preview implements SurfaceHolder.Callback, TextureView.SurfaceTextu
 	    		}
 	        }
 	        else
-				camera_controller_local = new CameraController1(cameraId, cameraErrorCallback);
+				camera_controller_local = new CameraController1(Preview.this.getContext(), cameraId, cameraErrorCallback);
 			//throw new CameraControllerException(); // uncomment to test camera not opening
 		}
 		catch(CameraControllerException e) {
@@ -2670,6 +2673,7 @@ public class Preview implements SurfaceHolder.Callback, TextureView.SurfaceTextu
 			private boolean success = false; // whether jpeg callback succeeded
 			private boolean has_date = false;
 			private Date current_date = null;
+            private String timeStamp;
 
 			public void onStarted() {
 				if( MyDebug.LOG )
@@ -2741,6 +2745,12 @@ public class Preview implements SurfaceHolder.Callback, TextureView.SurfaceTextu
     	    			takePictureOnTimer(timer_delay, true);
     	    		}
     	        }
+    	        else
+				{
+                    SharedPreferences sharedPreferences = PreferenceManager.getDefaultSharedPreferences(applicationInterface.getContext());
+                    int wahrsisModelNr = Integer.parseInt(sharedPreferences.getString("wahrsisNo", "0"));
+					applicationInterface.sendImages(timeStamp, wahrsisModelNr);
+				}
 			}
 
 			/** Ensures we get the same date for both JPEG and RAW; and that we set the date ASAP so that it corresponds to actual
@@ -2760,7 +2770,8 @@ public class Preview implements SurfaceHolder.Callback, TextureView.SurfaceTextu
 					Log.d(TAG, "onPictureTaken");
     	    	// n.b., this is automatically run in a different thread
 				initDate();
-				if( !applicationInterface.onPictureTaken(data, current_date) ) {
+                timeStamp = new SimpleDateFormat("yyyy-MM-dd-HH-mm-ss").format(new Date());
+				if( !applicationInterface.onPictureTaken(data, current_date, timeStamp) ) {
 					if( MyDebug.LOG )
 						Log.e(TAG, "applicationInterface.onPictureTaken failed");
 					success = false;
@@ -2775,9 +2786,9 @@ public class Preview implements SurfaceHolder.Callback, TextureView.SurfaceTextu
 					Log.d(TAG, "onBurstPictureTaken");
     	    	// n.b., this is automatically run in a different thread
 				initDate();
-
+                timeStamp = new SimpleDateFormat("yyyy-MM-dd-HH-mm-ss").format(new Date());
 				success = true;
-				if( !applicationInterface.onBurstPictureTaken(images, current_date) ) {
+				if( !applicationInterface.onBurstPictureTaken(images, current_date, timeStamp) ) {
 					if( MyDebug.LOG )
 						Log.e(TAG, "applicationInterface.onBurstPictureTaken failed");
 					success = false;

@@ -6,6 +6,7 @@ import android.content.SharedPreferences;
 import android.content.pm.ActivityInfo;
 import android.content.pm.PackageManager;
 
+import android.graphics.Color;
 import android.graphics.drawable.ColorDrawable;
 import android.os.Build;
 import android.preference.PreferenceManager;
@@ -46,6 +47,8 @@ public class MainActivity extends AppCompatActivity
     private int pictureInterval = 1;
     private int delayTime = 15;
     private boolean afEnabled = true;
+    private boolean createHDR = false;
+    private boolean keepImages = true;
 
     private CameraOperator camera = null;
     private SharedPreferences sharedPref = null;
@@ -55,9 +58,13 @@ public class MainActivity extends AppCompatActivity
     private FrameLayout frameLayout = null;
     private TextView tvEventLog = null;
     private TextView tvStatusInfo = null;
+    private TextView tvConnectionStatus = null;
 
     private HandlerThread mBackgroundThread = null;
     private Handler mBackgroundHandler = null;
+
+    private String authorizationToken = null;
+    private WSIServerClient serverClient = null;
 
     @Override
     protected void onCreate(Bundle savedInstanceState)
@@ -103,7 +110,7 @@ public class MainActivity extends AppCompatActivity
 
             case R.id.action_refresh:
                 getWSISettings();
-//                checkNetworkStatus();
+                checkNetworkStatus();
                 Toast.makeText(MainActivity.this, "Refreshed Settings", Toast.LENGTH_SHORT).show();
                 return true;
 
@@ -186,9 +193,29 @@ public class MainActivity extends AppCompatActivity
         return tvEventLog;
     }
 
+    public TextView getTvConnectionStatus()
+    {
+        return tvConnectionStatus;
+    }
+
     public boolean getAFEnabled()
     {
         return afEnabled;
+    }
+
+    public boolean getCreateHDR()
+    {
+        return createHDR;
+    }
+
+    public boolean getKeepImages()
+    {
+        return keepImages;
+    }
+
+    public WSIServerClient getServerClient()
+    {
+        return serverClient;
     }
 
     private void startBackgroundThread()
@@ -226,7 +253,7 @@ public class MainActivity extends AppCompatActivity
         tvStatusInfo = (TextView) findViewById(R.id.tvStatusInfo);
         tvStatusInfo.setText("idle");
 
-        camera = new CameraOperator(this);
+        tvConnectionStatus  = (TextView) findViewById(R.id.tvConnectionStatus);
 
         runButton = (Button) findViewById(R.id.buttonRun);
         assert runButton != null;
@@ -264,6 +291,12 @@ public class MainActivity extends AppCompatActivity
                 stopImaging();
             }
         });
+
+        // initiate server client
+        serverClient = new WSIServerClient(this, "https://www.visuo.adsc.com.sg/api/skypicture/", authorizationToken);
+        checkNetworkStatus();
+
+        camera = new CameraOperator(this);
     }
 
     private void checkPermissions()
@@ -306,6 +339,21 @@ public class MainActivity extends AppCompatActivity
         }
     }
 
+    private void checkNetworkStatus() {
+        // check internet connection
+        if (serverClient.isConnected()) {
+            tvConnectionStatus.setText("online");
+            tvConnectionStatus.setTextColor(getResources().getColor(R.color.darkGreen));
+            Log.d(TAG, "Device is online.");
+            tvEventLog.append("\nDevice is online.");
+        } else {
+            tvConnectionStatus.setText("offline");
+            tvConnectionStatus.setTextColor(Color.BLACK);
+            Log.d(TAG, "Device is offline.");
+            tvEventLog.append("\nDevice is offline.");
+        }
+    }
+
     /**
      * set up preferences
      */
@@ -330,6 +378,11 @@ public class MainActivity extends AppCompatActivity
         delayTime = Integer.parseInt(sharedPref.getString("startDelay", "15"));
 
         afEnabled = sharedPref.getBoolean("enableAF", true);
+
+        createHDR = sharedPref.getBoolean("createHDR", false);
+        serverClient.setCreateHDR(createHDR);
+
+        keepImages = sharedPref.getBoolean("keepImages", true);
 //        tvEventLog.append("\nPicture interval: " + pictureInterval + " min.");
 //        flagWriteExif = sharedPref.getBoolean("extendedExif", false);
 //        Log.d(TAG, "Extended exif: " + flagWriteExif);
