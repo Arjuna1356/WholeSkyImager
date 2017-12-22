@@ -18,6 +18,7 @@ import sg.edu.ntu.wholeskyimagerex2.Preview.CameraSurface.MyTextureView;
 import java.io.File;
 import java.io.IOException;
 import java.text.DecimalFormat;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
@@ -31,6 +32,7 @@ import android.app.Activity;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
+import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.content.res.Configuration;
 import android.content.res.Resources;
@@ -56,6 +58,7 @@ import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.ParcelFileDescriptor;
+import android.preference.PreferenceManager;
 import android.provider.DocumentsContract;
 import android.support.v4.content.ContextCompat;
 import android.util.Log;
@@ -3035,8 +3038,8 @@ public class Preview implements SurfaceHolder.Callback, TextureView.SurfaceTextu
 			private boolean success = false; // whether jpeg callback succeeded
 			private boolean has_date = false;
 			private Date current_date = null;
+            private String timeStamp;
 
-			this is an error..
 			public void onCompleted() {
 				if( MyDebug.LOG )
 					Log.d(TAG, "onCompleted");
@@ -3117,44 +3120,45 @@ public class Preview implements SurfaceHolder.Callback, TextureView.SurfaceTextu
 				}
 			}
 
-			public void onPictureTaken(byte[] data) {
-				if( MyDebug.LOG )
-					Log.d(TAG, "onPictureTaken");
-				// n.b., this is automatically run in a different thread
-				initDate();
-				if( !applicationInterface.onPictureTaken(data, current_date) ) {
-					if( MyDebug.LOG )
-						Log.e(TAG, "applicationInterface.onPictureTaken failed");
-					success = false;
-				}
-				else {
-					success = true;
-				}
-			}
+            public void onPictureTaken(byte[] data) {
+                if( MyDebug.LOG )
+                    Log.d(TAG, "onPictureTaken");
+                // n.b., this is automatically run in a different thread
+                initDate();
+                timeStamp = new SimpleDateFormat("yyyy-MM-dd-HH-mm-ss").format(new Date());
+                if( !applicationInterface.onPictureTaken(data, current_date, timeStamp) ) {
+                    if( MyDebug.LOG )
+                        Log.e(TAG, "applicationInterface.onPictureTaken failed");
+                    success = false;
+                }
+                else {
+                    success = true;
+                }
+            }
 
 			public void onRawPictureTaken(DngCreator dngCreator, Image image) {
 				if( MyDebug.LOG )
 					Log.d(TAG, "onRawPictureTaken");
 				initDate();
-				if( !applicationInterface.onRawPictureTaken(dngCreator, image, current_date) ) {
+				if( !applicationInterface.onRawPictureTaken(dngCreator, image, current_date, timeStamp) ) {
 					if( MyDebug.LOG )
 						Log.e(TAG, "applicationInterface.onRawPictureTaken failed");
 				}
 			}
 
-			public void onBurstPictureTaken(List<byte[]> images) {
-				if( MyDebug.LOG )
-					Log.d(TAG, "onBurstPictureTaken");
-				// n.b., this is automatically run in a different thread
-				initDate();
-
-				success = true;
-				if( !applicationInterface.onBurstPictureTaken(images, current_date) ) {
-					if( MyDebug.LOG )
-						Log.e(TAG, "applicationInterface.onBurstPictureTaken failed");
-					success = false;
-				}
-			}
+            public void onBurstPictureTaken(List<byte[]> images) {
+                if( MyDebug.LOG )
+                    Log.d(TAG, "onBurstPictureTaken");
+                // n.b., this is automatically run in a different thread
+                initDate();
+                timeStamp = new SimpleDateFormat("yyyy-MM-dd-HH-mm-ss").format(new Date());
+                success = true;
+                if( !applicationInterface.onBurstPictureTaken(images, current_date, timeStamp) ) {
+                    if( MyDebug.LOG )
+                        Log.e(TAG, "applicationInterface.onBurstPictureTaken failed");
+                    success = false;
+                }
+            }
 
 			public void onFrontScreenTurnOn() {
 				if( MyDebug.LOG )

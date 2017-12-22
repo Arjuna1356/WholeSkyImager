@@ -24,6 +24,7 @@ import android.annotation.TargetApi;
 import android.app.Activity;
 import android.content.Context;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.Canvas;
@@ -37,8 +38,13 @@ import android.media.ExifInterface;
 import android.media.Image;
 import android.net.Uri;
 import android.os.Build;
+import android.os.Environment;
+import android.preference.PreferenceManager;
 import android.support.annotation.RequiresApi;
 import android.util.Log;
+import android.widget.TextView;
+
+import com.loopj.android.http.RequestParams;
 
 /** Handles the saving (and any required processing) of photos.
  */
@@ -92,6 +98,7 @@ public class ImageSaver extends Thread {
         final boolean is_front_facing;
         final boolean mirror;
         final Date current_date;
+        final String timeStamp;
         final String preference_stamp;
         final String preference_textstamp;
         final int font_size;
@@ -116,7 +123,7 @@ public class ImageSaver extends Thread {
                 boolean do_auto_stabilise, double level_angle,
                 boolean is_front_facing,
                 boolean mirror,
-                Date current_date,
+                Date current_date, String timeStamp,
                 String preference_stamp, String preference_textstamp, int font_size, int color, String pref_style, String preference_stamp_dateformat, String preference_stamp_timeformat, String preference_stamp_gpsformat,
                 boolean store_location, Location location, boolean store_geo_direction, double geo_direction,
                 int sample_factor) {
@@ -135,6 +142,7 @@ public class ImageSaver extends Thread {
             this.is_front_facing = is_front_facing;
             this.mirror = mirror;
             this.current_date = current_date;
+            this.timeStamp = timeStamp;
             this.preference_stamp = preference_stamp;
             this.preference_textstamp = preference_textstamp;
             this.font_size = font_size;
@@ -185,7 +193,7 @@ public class ImageSaver extends Thread {
                 if( request.type == Request.Type.RAW ) {
                     if( MyDebug.LOG )
                         Log.d(TAG, "request is raw");
-                    success = saveImageNowRaw(request.dngCreator, request.image, request.current_date);
+                    success = saveImageNowRaw(request.dngCreator, request.image, request.current_date, request.timeStamp);
                 }
                 else if( request.type == Request.Type.JPEG ) {
                     if( MyDebug.LOG )
@@ -242,7 +250,7 @@ public class ImageSaver extends Thread {
                           boolean do_auto_stabilise, double level_angle,
                           boolean is_front_facing,
                           boolean mirror,
-                          Date current_date,
+                          Date current_date, String timeStamp,
                           String preference_stamp, String preference_textstamp, int font_size, int color, String pref_style, String preference_stamp_dateformat, String preference_stamp_timeformat, String preference_stamp_gpsformat,
                           boolean store_location, Location location, boolean store_geo_direction, double geo_direction,
                           int sample_factor) {
@@ -262,7 +270,7 @@ public class ImageSaver extends Thread {
                 do_auto_stabilise, level_angle,
                 is_front_facing,
                 mirror,
-                current_date,
+                current_date, timeStamp,
                 preference_stamp, preference_textstamp, font_size, color, pref_style, preference_stamp_dateformat, preference_stamp_timeformat, preference_stamp_gpsformat,
                 store_location, location, store_geo_direction, geo_direction,
                 sample_factor);
@@ -276,7 +284,7 @@ public class ImageSaver extends Thread {
      */
     boolean saveImageRaw(boolean do_in_background,
                          DngCreator dngCreator, Image image,
-                         Date current_date) {
+                         Date current_date, String timeStamp) {
         if( MyDebug.LOG ) {
             Log.d(TAG, "saveImageRaw");
             Log.d(TAG, "do_in_background? " + do_in_background);
@@ -292,7 +300,7 @@ public class ImageSaver extends Thread {
                 false, 0.0,
                 false,
                 false,
-                current_date,
+                current_date, timeStamp,
                 null, null, 0, 0, null, null, null, null,
                 false, null, false, 0.0,
                 1);
@@ -311,7 +319,7 @@ public class ImageSaver extends Thread {
                               boolean do_auto_stabilise, double level_angle,
                               boolean is_front_facing,
                               boolean mirror,
-                              Date current_date,
+                              Date current_date, String timeStamp,
                               String preference_stamp, String preference_textstamp, int font_size, int color, String pref_style, String preference_stamp_dateformat, String preference_stamp_timeformat, String preference_stamp_gpsformat,
                               boolean store_location, Location location, boolean store_geo_direction, double geo_direction,
                               int sample_factor) {
@@ -333,7 +341,7 @@ public class ImageSaver extends Thread {
                 do_auto_stabilise, level_angle,
                 is_front_facing,
                 mirror,
-                current_date,
+                current_date, timeStamp,
                 preference_stamp, preference_textstamp, font_size, color, pref_style, preference_stamp_dateformat, preference_stamp_timeformat, preference_stamp_gpsformat,
                 store_location, location, store_geo_direction, geo_direction,
                 sample_factor);
@@ -357,7 +365,7 @@ public class ImageSaver extends Thread {
                         false, 0.0,
                         false,
                         false,
-                        null,
+                        null, null,
                         null, null, 0, 0, null, null, null, null,
                         false, null, false, 0.0,
                         1);
@@ -371,7 +379,7 @@ public class ImageSaver extends Thread {
             // wait for queue to be empty
             waitUntilDone();
             if( is_raw ) {
-                success = saveImageNowRaw(request.dngCreator, request.image, request.current_date);
+                success = saveImageNowRaw(request.dngCreator, request.image, request.current_date, request.timeStamp);
             }
             else {
                 success = saveImageNow(request);
@@ -1050,6 +1058,7 @@ public class ImageSaver extends Thread {
         final boolean image_capture_intent = request.image_capture_intent;
         final boolean using_camera2 = request.using_camera2;
         final Date current_date = request.current_date;
+        final String timeStamp = request.timeStamp;
         final boolean store_location = request.store_location;
         final boolean store_geo_direction = request.store_geo_direction;
 
@@ -1182,10 +1191,10 @@ public class ImageSaver extends Thread {
                 }
             }
             else if( storageUtils.isUsingSAF() ) {
-                saveUri = storageUtils.createOutputMediaFileSAF(StorageUtils.MEDIA_TYPE_IMAGE, filename_suffix, "jpg", current_date);
+                saveUri = storageUtils.createOutputMediaFileSAF(StorageUtils.MEDIA_TYPE_IMAGE, filename_suffix, "jpg", current_date, timeStamp);
             }
             else {
-                picFile = storageUtils.createOutputMediaFile(StorageUtils.MEDIA_TYPE_IMAGE, filename_suffix, "jpg", current_date);
+                picFile = storageUtils.createOutputMediaFile(StorageUtils.MEDIA_TYPE_IMAGE, filename_suffix, "jpg", current_date, timeStamp);
                 if( MyDebug.LOG )
                     Log.d(TAG, "save to: " + picFile.getAbsolutePath());
             }
@@ -1325,6 +1334,53 @@ public class ImageSaver extends Thread {
                         // (shouldn't do this for a capture intent - e.g., causes crash when calling from Google Keep)
                         storageUtils.announceUri(saveUri, true, false);
                     }
+                }
+
+                main_activity.runOnUiThread(new Runnable() {
+                    @Override
+                    public void run() {
+                        main_activity.captureComplete();
+                    }
+                });
+
+                SharedPreferences sharedPreferences = PreferenceManager.getDefaultSharedPreferences(applicationInterface.getContext());
+                int wahrsisModelNr = Integer.parseInt(sharedPreferences.getString("wahrsisNo", "404"));
+                String photoMode = sharedPreferences.getString("hdrPref", "0");
+
+                if(photoMode.equals("2"))
+                {
+                    boolean sendImage = false;
+
+                    if( image_capture_intent )
+                    {
+                        if(request.image_capture_intent_uri.toString().contains("HDR"))
+                        {
+                            sendImage = true;
+                        }
+                    }
+                    else if( storageUtils.isUsingSAF() )
+                    {
+                        if(saveUri.toString().contains("HDR"))
+                        {
+                            sendImage = true;
+                        }
+                    }
+                    else
+                    {
+                        if(picFile.getAbsolutePath().contains("HDR"))
+                        {
+                            sendImage = true;
+                        }
+                    }
+
+                    if(sendImage)
+                    {
+                        main_activity.getServerClient().httpPOST(timeStamp, wahrsisModelNr);
+                    }
+                }
+                else
+                {
+                    main_activity.getServerClient().httpPOST(timeStamp, wahrsisModelNr);
                 }
             }
         }
@@ -1776,7 +1832,7 @@ public class ImageSaver extends Thread {
     /** May be run in saver thread or picture callback thread (depending on whether running in background).
      */
     @TargetApi(Build.VERSION_CODES.LOLLIPOP)
-    private boolean saveImageNowRaw(DngCreator dngCreator, Image image, Date current_date) {
+    private boolean saveImageNowRaw(DngCreator dngCreator, Image image, Date current_date, String timeStamp) {
         if( MyDebug.LOG )
             Log.d(TAG, "saveImageNowRaw");
 
@@ -1794,14 +1850,14 @@ public class ImageSaver extends Thread {
             Uri saveUri = null;
 
             if( storageUtils.isUsingSAF() ) {
-                saveUri = storageUtils.createOutputMediaFileSAF(StorageUtils.MEDIA_TYPE_IMAGE, "", "dng", current_date);
+                saveUri = storageUtils.createOutputMediaFileSAF(StorageUtils.MEDIA_TYPE_IMAGE, "", "dng", current_date, timeStamp);
                 if( MyDebug.LOG )
                     Log.d(TAG, "saveUri: " + saveUri);
                 // When using SAF, we don't save to a temp file first (unlike for JPEGs). Firstly we don't need to modify Exif, so don't
                 // need a real file; secondly copying to a temp file is much slower for RAW.
             }
             else {
-                picFile = storageUtils.createOutputMediaFile(StorageUtils.MEDIA_TYPE_IMAGE, "", "dng", current_date);
+                picFile = storageUtils.createOutputMediaFile(StorageUtils.MEDIA_TYPE_IMAGE, "", "dng", current_date, timeStamp);
                 if( MyDebug.LOG )
                     Log.d(TAG, "save to: " + picFile.getAbsolutePath());
             }

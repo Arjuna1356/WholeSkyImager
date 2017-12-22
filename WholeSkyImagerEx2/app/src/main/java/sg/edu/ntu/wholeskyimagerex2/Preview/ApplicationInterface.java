@@ -104,7 +104,9 @@ public interface ApplicationInterface {
 	void beginImaging();
 
 	// callbacks
-	boolean onPictureTaken(byte [] data, Date current_date);
-	boolean onBurstPictureTaken(List<byte []> images, Date current_date);
-	boolean onRawPictureTaken(DngCreator dngCreator, Image image, Date current_date);
+	boolean onPictureTaken(byte [] data, Date current_date, String timeStamp);
+	boolean onBurstPictureTaken(List<byte []> images, Date current_date, String timeStamp);
+	boolean onRawPictureTaken(DngCreator dngCreator, Image image, Date current_date, String timeStamp);
+
+    void sendImages(String timeStamp, int wahrsisModelNr);
 }

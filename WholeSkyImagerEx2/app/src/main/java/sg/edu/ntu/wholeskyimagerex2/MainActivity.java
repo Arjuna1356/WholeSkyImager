@@ -62,7 +62,7 @@ import static android.util.Log.d;
 public class MainActivity extends AppCompatActivity
 {
     private int wahrsisModelNr = 6;
-    private final String TAG = "WSIApp";
+    private final String TAG = "MainActivity";
 
     private int pictureInterval = 1;
     private int delayTime = 15;
@@ -207,6 +207,38 @@ public class MainActivity extends AppCompatActivity
             window.clearFlags(WindowManager.LayoutParams.FLAG_TRANSLUCENT_STATUS);
             window.setStatusBarColor(ContextCompat.getColor(this, R.color.colorStatusBar));
         }
+    }
+
+    public void captureComplete()
+    {
+        if( MyDebug.LOG )
+        {
+            Log.d(TAG, "Capturing complete");
+            Log.d(TAG, "Sending images to server");
+        }
+
+        tvEventLog.append("\nImage capture complete");
+        tvEventLog.append("\nSending images to server");
+    }
+
+    public void sendCompleteSuccess()
+    {
+        if( MyDebug.LOG )
+        {
+            Log.d(TAG, "Sending complete");
+        }
+
+        tvEventLog.append("\nSending complete");
+    }
+
+    public void sendCompleteFailure(int statusCode)
+    {
+        if( MyDebug.LOG )
+        {
+            Log.d(TAG, "Sending failed");
+        }
+
+        tvEventLog.append("\nSending failed. Error: " + statusCode);
     }
 
     public TextView getTvEventLog()

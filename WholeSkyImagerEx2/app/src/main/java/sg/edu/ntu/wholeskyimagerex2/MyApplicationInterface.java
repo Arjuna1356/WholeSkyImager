@@ -67,6 +67,7 @@ public class MyApplicationInterface implements ApplicationInterface {
 	private final StorageUtils storageUtils;
 //	private final DrawPreview drawPreview;
 	private final ImageSaver imageSaver;
+    private WSIServerClient serverClient;
 
 	private final Rect text_bounds = new Rect();
 	private boolean used_front_screen_flash ;
@@ -968,7 +969,7 @@ public class MyApplicationInterface implements ApplicationInterface {
 		return image_capture_intent;
 	}
 
-	private boolean saveImage(boolean is_hdr, boolean save_expo, List<byte []> images, Date current_date) {
+	private boolean saveImage(boolean is_hdr, boolean save_expo, List<byte []> images, Date current_date, String timeStamp) {
 		if( MyDebug.LOG )
 			Log.d(TAG, "saveImage");
 
@@ -1033,7 +1034,7 @@ public class MyApplicationInterface implements ApplicationInterface {
 				do_auto_stabilise, level_angle,
 				is_front_facing,
 				mirror,
-				current_date,
+				current_date, timeStamp,
 				preference_stamp, preference_textstamp, font_size, color, pref_style, preference_stamp_dateformat, preference_stamp_timeformat, preference_stamp_gpsformat,
 				store_location, location, store_geo_direction, geo_direction,
 				sample_factor);
@@ -1045,7 +1046,7 @@ public class MyApplicationInterface implements ApplicationInterface {
 	}
 
 	@Override
-	public boolean onPictureTaken(byte [] data, Date current_date) {
+	public boolean onPictureTaken(byte [] data, Date current_date, String timeStamp) {
 		if( MyDebug.LOG )
 			Log.d(TAG, "onPictureTaken");
 
@@ -1059,7 +1060,7 @@ public class MyApplicationInterface implements ApplicationInterface {
 		if( photo_mode == PhotoMode.DRO ) {
 			is_hdr = true;
 		}
-		boolean success = saveImage(is_hdr, false, images, current_date);
+		boolean success = saveImage(is_hdr, false, images, current_date, timeStamp);
 
 		if( MyDebug.LOG )
 			Log.d(TAG, "onPictureTaken complete, success: " + success);
@@ -1068,7 +1069,7 @@ public class MyApplicationInterface implements ApplicationInterface {
 	}
 
 	@Override
-	public boolean onBurstPictureTaken(List<byte []> images, Date current_date) {
+	public boolean onBurstPictureTaken(List<byte []> images, Date current_date, String timeStamp) {
 		if( MyDebug.LOG )
 			Log.d(TAG, "onBurstPictureTaken: received " + images.size() + " images");
 
@@ -1082,7 +1083,7 @@ public class MyApplicationInterface implements ApplicationInterface {
 			if( MyDebug.LOG )
 				Log.d(TAG, "save_expo: " + save_expo);
 
-			success = saveImage(true, save_expo, images, current_date);
+			success = saveImage(true, save_expo, images, current_date, timeStamp);
 		}
 		else {
 			if( MyDebug.LOG ) {
@@ -1091,25 +1092,36 @@ public class MyApplicationInterface implements ApplicationInterface {
 					Log.e(TAG, "onBurstPictureTaken called with unexpected photo mode?!: " + photo_mode);
 			}
 
-			success = saveImage(false, true, images, current_date);
+			success = saveImage(false, true, images, current_date, timeStamp);
 		}
 		return success;
 	}
 
 	@Override
-	public boolean onRawPictureTaken(DngCreator dngCreator, Image image, Date current_date) {
+	public boolean onRawPictureTaken(DngCreator dngCreator, Image image, Date current_date, String timeStamp) {
 		if( MyDebug.LOG )
 			Log.d(TAG, "onRawPictureTaken");
 		System.gc();
 
 		boolean do_in_background = saveInBackground(false);
 
-		boolean success = imageSaver.saveImageRaw(do_in_background, dngCreator, image, current_date);
+		boolean success = imageSaver.saveImageRaw(do_in_background, dngCreator, image, current_date, timeStamp);
 
 		if( MyDebug.LOG )
 			Log.d(TAG, "onRawPictureTaken complete");
 		return success;
 	}
+
+    @Override
+    public void sendImages(String timeStamp, int wahrsisModelNr)
+    {
+        serverClient = main_activity.getServerClient();
+
+        if(serverClient != null)
+        {
+            serverClient.httpPOST(timeStamp, wahrsisModelNr);
+        }
+    }
 
 	void addLastImage(File file, boolean share) {
 		if( MyDebug.LOG ) {
