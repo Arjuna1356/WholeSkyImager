@@ -28,6 +28,8 @@ import android.renderscript.RenderScript;
 
 import android.support.annotation.NonNull;
 import android.support.v4.app.ActivityCompat;
+import android.support.v4.app.FragmentManager;
+import android.support.v4.app.FragmentTransaction;
 import android.support.v4.content.ContextCompat;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
@@ -40,7 +42,6 @@ import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
-import android.view.ViewGroup;
 import android.view.Window;
 import android.view.WindowManager;
 
@@ -73,7 +74,7 @@ public class MainActivity extends AppCompatActivity
 
     private Button runButton;
     private Button stopButton;
-    private FrameLayout frameLayout;
+    private FrameLayout cameraFrame;
     private TextView tvEventLog;
     private TextView tvStatusInfo;
     private TextView tvConnectionStatus = null;
@@ -97,6 +98,13 @@ public class MainActivity extends AppCompatActivity
 
     private String authorizationToken;
     private WSIServerClient serverClient;
+
+    // Fragment management
+    private FragmentManager myFragmentManager = null;
+    private FragmentTransaction transaction = null;
+
+    private MainFragment mMainFragment = null;
+    private SettingsFragment mSettingsFragment = null;
 
     @Override
     protected void onCreate(Bundle savedInstanceState)
@@ -152,8 +160,10 @@ public class MainActivity extends AppCompatActivity
         switch (id)
         {
             case R.id.action_settings:
-                Intent intentSettings = new Intent(this, SettingsActivity.class);
-                startActivity(intentSettings);
+                transaction = myFragmentManager.beginTransaction();
+                transaction.replace(R.id.main_layout, mSettingsFragment, "Settings");
+                transaction.addToBackStack(null);
+                transaction.commit();
                 return true;
 
             case R.id.action_help:
@@ -442,6 +452,36 @@ public class MainActivity extends AppCompatActivity
         getWSISettings();
     }
 
+    public void setRunButton(Button runButton)
+    {
+        this.runButton = runButton;
+    }
+
+    public void setStopButton(Button stopButton)
+    {
+        this.stopButton = stopButton;
+    }
+
+    public void setStatusInfo(TextView statusInfo)
+    {
+        this.tvStatusInfo = statusInfo;
+    }
+
+    public void setConnectionStatus(TextView connectionStatus)
+    {
+        this.tvConnectionStatus = connectionStatus;
+    }
+
+    public void setEventLog(TextView eventLog)
+    {
+        this.tvEventLog = eventLog;
+    }
+
+    public void setCameraFrame(FrameLayout cameraFrame)
+    {
+        this.cameraFrame = cameraFrame;
+    }
+
     private void initialize(Bundle savedInstanceState)
     {
         long debug_time = 0;
@@ -451,21 +491,24 @@ public class MainActivity extends AppCompatActivity
             debug_time = System.currentTimeMillis();
         }
 
-        frameLayout = (FrameLayout) findViewById(R.id.camera_preview);
+        myFragmentManager = getSupportFragmentManager();
+        mMainFragment = new MainFragment();
 
-        tvEventLog = (TextView) findViewById(R.id.tvEventLog);
+        if (savedInstanceState == null) {
+            // Initiate the intial main Fragment
+            transaction = myFragmentManager.beginTransaction();
+            transaction.add(R.id.main_layout, mMainFragment, "mainFragment");
+            transaction.commit();
+        }
+
         tvEventLog.setMovementMethod(new ScrollingMovementMethod());
 
         Date d2 = new Date();
         CharSequence dateTime2 = DateFormat.format("HH:mm:ss", d2.getTime());
         tvEventLog.append("\nTime: " + dateTime2);
 
-        tvStatusInfo = (TextView) findViewById(R.id.tvStatusInfo);
         tvStatusInfo.setText("idle");
 
-        tvConnectionStatus  = (TextView) findViewById(R.id.tvConnectionStatus);
-
-        runButton = (Button) findViewById(R.id.buttonRun);
         assert runButton != null;
         runButton.setTag(0);
         runButton.setOnClickListener(new View.OnClickListener()
@@ -489,7 +532,6 @@ public class MainActivity extends AppCompatActivity
             }
         });
 
-        stopButton = (Button) findViewById(R.id.buttonStop);
         assert stopButton != null;
         stopButton.setOnClickListener(new View.OnClickListener()
         {
@@ -830,7 +872,7 @@ public class MainActivity extends AppCompatActivity
     private void openCamera()
     {
         // set up the camera and its preview
-        preview = new Preview(applicationInterface, ((ViewGroup) findViewById(R.id.camera_preview)));
+        preview = new Preview(applicationInterface, cameraFrame);
         preview.onResume();
 
         if(preview.hasSurface())
