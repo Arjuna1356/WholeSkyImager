@@ -1,7 +1,5 @@
 package sg.edu.ntu.wholeskyimagerex2;
 
-import android.content.Context;
-import android.net.Uri;
 import android.os.Bundle;
 import android.support.v4.app.Fragment;
 import android.view.LayoutInflater;
@@ -32,6 +30,8 @@ public class MainFragment extends Fragment
         mainActivity.setConnectionStatus((TextView) view.findViewById(R.id.tvConnectionStatus));
         mainActivity.setEventLog((TextView) view.findViewById(R.id.tvEventLog));
         mainActivity.setCameraFrame((FrameLayout) view.findViewById(R.id.camera_preview));
+
+        mainActivity.fragmentInitialize();
 
         return view;
     }

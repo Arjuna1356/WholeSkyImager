@@ -493,6 +493,7 @@ public class MainActivity extends AppCompatActivity
 
         myFragmentManager = getSupportFragmentManager();
         mMainFragment = new MainFragment();
+        mSettingsFragment = new SettingsFragment();
 
         if (savedInstanceState == null) {
             // Initiate the intial main Fragment
@@ -500,55 +501,6 @@ public class MainActivity extends AppCompatActivity
             transaction.add(R.id.main_layout, mMainFragment, "mainFragment");
             transaction.commit();
         }
-
-        tvEventLog.setMovementMethod(new ScrollingMovementMethod());
-
-        Date d2 = new Date();
-        CharSequence dateTime2 = DateFormat.format("HH:mm:ss", d2.getTime());
-        tvEventLog.append("\nTime: " + dateTime2);
-
-        tvStatusInfo.setText("idle");
-
-        assert runButton != null;
-        runButton.setTag(0);
-        runButton.setOnClickListener(new View.OnClickListener()
-        {
-            @Override
-            public void onClick(View v)
-            {
-                final int status = (Integer) v.getTag();
-
-                if (status == 0)
-                {
-                    openCamera();
-
-                    runButton.setText(getResources().getString(R.string.captureButton_text));
-                    v.setTag(1);
-                } else
-                {
-                    clickedTakePhoto();
-                }
-
-            }
-        });
-
-        assert stopButton != null;
-        stopButton.setOnClickListener(new View.OnClickListener()
-        {
-            @Override
-            public void onClick(View v)
-            {
-                final int status = (Integer) runButton.getTag();
-
-                if (status == 1)
-                {
-                    stopImaging();
-
-                    runButton.setTag(0);
-                    runButton.setText(getResources().getString(R.string.runButton_text));
-                }
-            }
-        });
 
         sharedPref = PreferenceManager.getDefaultSharedPreferences(this);
 
@@ -582,6 +534,57 @@ public class MainActivity extends AppCompatActivity
 
         // initiate server client
         serverClient = new WSIServerClient(this, "https://www.visuo.adsc.com.sg/api/skypicture/", authorizationToken);
+    }
+
+    public void fragmentInitialize()
+    {
+        tvEventLog.setMovementMethod(new ScrollingMovementMethod());
+
+        Date d2 = new Date();
+        CharSequence dateTime2 = DateFormat.format("HH:mm:ss", d2.getTime());
+        tvEventLog.append("\nTime: " + dateTime2);
+
+        tvStatusInfo.setText("idle");
+
+        runButton.setTag(0);
+        runButton.setOnClickListener(new View.OnClickListener()
+        {
+            @Override
+            public void onClick(View v)
+            {
+                final int status = (Integer) v.getTag();
+
+                if (status == 0)
+                {
+                    openCamera();
+
+                    runButton.setText(getResources().getString(R.string.captureButton_text));
+                    v.setTag(1);
+                } else
+                {
+                    clickedTakePhoto();
+                }
+
+            }
+        });
+
+        stopButton.setOnClickListener(new View.OnClickListener()
+        {
+            @Override
+            public void onClick(View v)
+            {
+                final int status = (Integer) runButton.getTag();
+
+                if (status == 1)
+                {
+                    stopImaging();
+
+                    runButton.setTag(0);
+                    runButton.setText(getResources().getString(R.string.runButton_text));
+                }
+            }
+        });
+
         checkNetworkStatus();
     }
 

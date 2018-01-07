@@ -43,8 +43,8 @@ public class SettingsActivity extends PreferenceActivity
         ListPreference isoPreference = new ListPreference(preferenceScreen.getContext());
         isoPreference.setTitle("ISO Value");
         isoPreference.setKey("preference_iso");
-        isoPreference.setEntries();
-        isoPreference.setEntryValues();
+//        isoPreference.setEntries();
+//        isoPreference.setEntryValues();
 
         preferenceCategory.addPreference(isoPreference);
 
@@ -58,14 +58,14 @@ public class SettingsActivity extends PreferenceActivity
         hdrModes.add("Standard");
         hdrValues.add("0");
 
-        if(mainActivity)
-        {
-
-        }
-
-
-        hdrPreference.setEntries();
-        hdrPreference.setEntryValues();
+//        if(mainActivity)
+//        {
+//
+//        }
+//
+//
+//        hdrPreference.setEntries();
+//        hdrPreference.setEntryValues();
 
         preferenceCategory.addPreference(hdrPreference);
     }
