@@ -33,41 +33,6 @@ public class SettingsActivity extends PreferenceActivity
         addPreferencesFromResource(R.xml.settings);
 
         PreferenceScreen preferenceScreen = this.getPreferenceScreen();
-
-        // create preferences manually
-        PreferenceCategory preferenceCategory = new PreferenceCategory(preferenceScreen.getContext());
-        preferenceCategory.setTitle("Camera Options");
-        //do anything you want with the preferencecategory here
-        preferenceScreen.addPreference(preferenceCategory);
-
-        ListPreference isoPreference = new ListPreference(preferenceScreen.getContext());
-        isoPreference.setTitle("ISO Value");
-        isoPreference.setKey("preference_iso");
-        isoPreference.setEntries();
-        isoPreference.setEntryValues();
-
-        preferenceCategory.addPreference(isoPreference);
-
-        ListPreference hdrPreference = new ListPreference(preferenceScreen.getContext());
-        hdrPreference.setTitle("Use HDR?");
-        hdrPreference.setKey("hdrPref");
-
-        ArrayList<String> hdrModes = new ArrayList<String>();
-        ArrayList<String> hdrValues = new ArrayList<String>();
-
-        hdrModes.add("Standard");
-        hdrValues.add("0");
-
-        if(mainActivity)
-        {
-
-        }
-
-
-        hdrPreference.setEntries();
-        hdrPreference.setEntryValues();
-
-        preferenceCategory.addPreference(hdrPreference);
     }
 
     @Override

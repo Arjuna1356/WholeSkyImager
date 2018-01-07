@@ -174,7 +174,7 @@ public class MainActivity extends AppCompatActivity
     {
         super.onResume();
         Log.d(TAG, "onResume");
-//        startBackgroundThread();
+        startBackgroundThread();
     }
 
     @Override
@@ -188,7 +188,7 @@ public class MainActivity extends AppCompatActivity
 
         stopImaging();
 
-//        stopBackgroundThread();
+        stopBackgroundThread();
     }
 
     public void setupActionBar()
@@ -279,6 +279,11 @@ public class MainActivity extends AppCompatActivity
     public StorageUtils getStorageUtils()
     {
         return this.applicationInterface.getStorageUtils();
+    }
+
+    public WSIServerClient getServerClient ()
+    {
+        return serverClient;
     }
 
     public boolean supportsDRO()
@@ -440,6 +445,8 @@ public class MainActivity extends AppCompatActivity
         }
 
         getWSISettings();
+
+        mBackgroundHandler.postDelayed(imagingRunnable, delayTime * 1000);
     }
 
     private void initialize(Bundle savedInstanceState)
@@ -827,6 +834,27 @@ public class MainActivity extends AppCompatActivity
         }
     }
 
+    private void startBackgroundThread()
+    {
+        mBackgroundThread = new HandlerThread("Camera Background");
+        mBackgroundThread.start();
+        mBackgroundHandler = new Handler();
+    }
+
+    private void stopBackgroundThread()
+    {
+        mBackgroundThread.quitSafely();
+        try
+        {
+            mBackgroundThread.join();
+            mBackgroundThread = null;
+            mBackgroundHandler = null;
+        } catch (InterruptedException e)
+        {
+            e.printStackTrace();
+        }
+    }
+
     private void openCamera()
     {
         // set up the camera and its preview
@@ -845,6 +873,8 @@ public class MainActivity extends AppCompatActivity
 
         if (status == 1)
         {
+            mBackgroundHandler.removeCallbacks(imagingRunnable);
+
             preview.onPause();
             preview = null;
 
@@ -880,11 +910,6 @@ public class MainActivity extends AppCompatActivity
         }
     }
 
-    public WSIServerClient getServerClient ()
-    {
-        return serverClient;
-    }
-
     private void checkNetworkStatus() {
         // check internet connection
         if (serverClient.isConnected()) {
@@ -911,6 +936,7 @@ public class MainActivity extends AppCompatActivity
                 CharSequence dateTime = DateFormat.format("yyyy-MM-dd hh:mm:ss", d.getTime());
                 Log.d(TAG, "Runnable execution started. Time: " + dateTime + ". Interval: " + pictureInterval + " min");
                 tvEventLog.append("\nRunnable execution started. Time: " + dateTime + ". Interval: " + pictureInterval + " min");
+                clickedTakePhoto();
             } catch (Exception e)
             {
                 // TODO: handle exception
@@ -919,8 +945,8 @@ public class MainActivity extends AppCompatActivity
             } finally
             {
                 //also call the same runnable to call it at regular interval
+                mBackgroundHandler.postDelayed(this, pictureInterval * 60 * 1000);
             }
-            mBackgroundHandler.postDelayed(this, pictureInterval * 60 * 1000);
         }
     };
 }
