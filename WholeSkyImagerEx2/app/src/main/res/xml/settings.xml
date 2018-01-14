@@ -33,6 +33,7 @@
             android:title="Use DRO or HDR?"
             android:summary="Try to enhance images"
             android:key="hdrPref"
+            android:defaultValue="0"
             android:entries="@array/hdrArray"
             android:entryValues="@array/hdrValues"/>
         <SwitchPreference
@@ -40,6 +41,23 @@
             android:key="preference_hdr_save_expo"
             android:summary="Save base exposures for HDR composition"
             android:title="Save HDR Exposures"/>
+        <SwitchPreference
+            android:defaultValue="false"
+            android:key="keepfiles"
+            android:summary="Keep a copy of each image on the internal storage."
+            android:title="Keep Files"/>
+        <EditTextPreference
+            android:key = "preference_quality"
+            android:summary = "Quality of saved images (0 - 100)"
+            android:title="Image Quality"
+            android:defaultValue = "90"/>
+        <ListPreference
+            android:title="ISO Value"
+            android:summary="ISO value to use"
+            android:key="preference_iso"
+            android:defaultValue="auto"
+            android:entries="@array/isoArray"
+            android:entryValues="@array/isoValues"/>
         <!--<SwitchPreference-->
             <!--android:defaultValue="false"-->
             <!--android:key="createRAW"-->
@@ -78,10 +96,6 @@
     <!--</PreferenceCategory>-->
 
     <PreferenceCategory android:title="Debugging">
-        <SwitchPreference
-            android:defaultValue="false"
-            android:key="debugKeepfiles"
-            android:summary="Keep a copy of each image on the internal storage."
-            android:title="Keep Files"/>
+
     </PreferenceCategory>
 </PreferenceScreen>

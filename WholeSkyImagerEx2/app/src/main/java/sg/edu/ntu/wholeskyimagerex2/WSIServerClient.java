@@ -73,7 +73,7 @@ public class WSIServerClient
      * @param wahrsisModelNr
      * @return Status Code
      */
-    public void httpPOST(String timeStamp, int wahrsisModelNr)
+    public void httpPOST(final String timeStamp, final int wahrsisModelNr)
     {
         File imageFile = null;
         File imageFileLow = null;
@@ -100,6 +100,11 @@ public class WSIServerClient
                         mainActivity.sendCompleteSuccess();
                     }
                 });
+
+                if(mainActivity.getKeepFiles() == false)
+                {
+                    deleteImages(timeStamp, wahrsisModelNr);
+                }
             }
 
             @Override
@@ -122,6 +127,11 @@ public class WSIServerClient
                         mainActivity.sendCompleteSuccess();
                     }
                 });
+
+                if(mainActivity.getKeepFiles() == false)
+                {
+                    deleteImages(timeStamp, wahrsisModelNr);
+                }
             }
 
             @Override
@@ -196,6 +206,7 @@ public class WSIServerClient
             Log.d(TAG, "Could not find file " + imageFile);
         }
 
+        // Send actual image
         client.post(clientUrl, params, httpHandler);
 
         if(photoMode.equals("2"))
@@ -207,13 +218,67 @@ public class WSIServerClient
                 params.put("imageLow", imageFileLow);
                 params.put("imageMed", imageFileMed);
                 params.put("imageHigh", imageFileHigh);
+
+                // Send HDR base exposures
+                client.post(clientUrl, params, httpHandler);
             }
             catch (FileNotFoundException e)
             {
                 Log.d(TAG, "Could not find HDR base exposures.");
             }
+        }
+    }
 
-            client.post(clientUrl, params, httpHandler);
+    private void deleteImages(String timeStamp, int wahrsisModelNr)
+    {
+        SharedPreferences sharedPrefs = PreferenceManager.getDefaultSharedPreferences(mainActivity);
+        String photoMode = sharedPrefs.getString("hdrPref", "0");
+
+        //file management
+        String filePath = Environment.getExternalStorageDirectory().getPath() + "/WSI/";
+
+        File imgDeleter = null;
+        File imgLowDeleter  = null;
+        File imgMedDeleter  = null;
+        File imgHighDeleter  = null;
+
+        //prepare files to upload (normal image, low, med, high ev photo)
+        if(photoMode.equals("0"))
+        {
+            imgDeleter = new File(filePath + timeStamp + "_wahrsis" + wahrsisModelNr + ".jpg");
+        }
+        else if(photoMode.equals("1"))
+        {
+            imgDeleter = new File(filePath + timeStamp + "_wahrsis" + wahrsisModelNr + "_DRO" + ".jpg");
+        }
+        else if(photoMode.equals("2"))
+        {
+            imgDeleter = new File(filePath + timeStamp + "_wahrsis" + wahrsisModelNr + "_HDR" + ".jpg");
+            imgLowDeleter = new File(filePath + timeStamp + "_wahrsis" + wahrsisModelNr + "_LOW" + ".jpg");
+            imgMedDeleter = new File(filePath + timeStamp + "_wahrsis" + wahrsisModelNr + "_MED" + ".jpg");
+            imgHighDeleter = new File(filePath + timeStamp + "_wahrsis" + wahrsisModelNr + "_HIGH" + ".jpg");
+        }
+
+        Log.d(TAG, "Deleting images");
+
+        if(imgDeleter != null)
+        {
+            imgDeleter.delete();
+        }
+
+        if(imgLowDeleter != null)
+        {
+            imgLowDeleter.delete();
+        }
+
+        if(imgMedDeleter != null)
+        {
+            imgMedDeleter.delete();
+        }
+
+        if(imgHighDeleter != null)
+        {
+            imgHighDeleter.delete();
         }
     }
 }

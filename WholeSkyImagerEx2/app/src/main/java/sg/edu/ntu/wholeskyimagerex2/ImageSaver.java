@@ -1442,13 +1442,6 @@ public class ImageSaver extends Thread {
             Log.d(TAG, "Save single image performance: total time: " + (System.currentTimeMillis() - time_s));
         }
 
-        main_activity.runOnUiThread(new Runnable() {
-            @Override
-            public void run() {
-                main_activity.captureComplete();
-            }
-        });
-
         SharedPreferences sharedPreferences = PreferenceManager.getDefaultSharedPreferences(applicationInterface.getContext());
         int wahrsisModelNr = Integer.parseInt(sharedPreferences.getString("wahrsisNo", "404"));
         String photoMode = sharedPreferences.getString("hdrPref", "0");
@@ -1481,11 +1474,25 @@ public class ImageSaver extends Thread {
 
             if(sendImage)
             {
+                main_activity.runOnUiThread(new Runnable() {
+                    @Override
+                    public void run() {
+                        main_activity.captureComplete();
+                    }
+                });
+
                 main_activity.getServerClient().httpPOST(timeStamp, wahrsisModelNr);
             }
         }
         else
         {
+            main_activity.runOnUiThread(new Runnable() {
+                @Override
+                public void run() {
+                    main_activity.captureComplete();
+                }
+            });
+
             main_activity.getServerClient().httpPOST(timeStamp, wahrsisModelNr);
         }
 

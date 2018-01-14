@@ -68,6 +68,7 @@ public class MainActivity extends AppCompatActivity
     private int delayTime = 15;
     private boolean afEnabled = true;
     private int hdrPref = 0;
+    private boolean keepFiles = false;
 
     SharedPreferences sharedPref;
 
@@ -103,6 +104,7 @@ public class MainActivity extends AppCompatActivity
     {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+        getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
         setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_PORTRAIT);
 
         setupActionBar();
@@ -156,14 +158,6 @@ public class MainActivity extends AppCompatActivity
                 startActivity(intentSettings);
                 return true;
 
-            case R.id.action_help:
-                return true;
-
-            case R.id.action_about:
-                Intent intentAbout = new Intent(this, DisplayAboutActivity.class);
-                startActivity(intentAbout);
-                return true;
-
             default:
                 return super.onOptionsItemSelected(item);
         }
@@ -211,7 +205,7 @@ public class MainActivity extends AppCompatActivity
 
     public void captureComplete()
     {
-        if( MyDebug.LOG )
+        if (MyDebug.LOG)
         {
             Log.d(TAG, "Capturing complete");
             Log.d(TAG, "Sending images to server");
@@ -223,7 +217,7 @@ public class MainActivity extends AppCompatActivity
 
     public void sendCompleteSuccess()
     {
-        if( MyDebug.LOG )
+        if (MyDebug.LOG)
         {
             Log.d(TAG, "Sending complete");
         }
@@ -233,7 +227,7 @@ public class MainActivity extends AppCompatActivity
 
     public void sendCompleteFailure(int statusCode)
     {
-        if( MyDebug.LOG )
+        if (MyDebug.LOG)
         {
             Log.d(TAG, "Sending failed");
         }
@@ -254,6 +248,11 @@ public class MainActivity extends AppCompatActivity
     public boolean getAFEnabled()
     {
         return afEnabled;
+    }
+
+    public boolean getKeepFiles()
+    {
+        return keepFiles;
     }
 
     public int getRequestCameraPermission()
@@ -281,7 +280,7 @@ public class MainActivity extends AppCompatActivity
         return this.applicationInterface.getStorageUtils();
     }
 
-    public WSIServerClient getServerClient ()
+    public WSIServerClient getServerClient()
     {
         return serverClient;
     }
@@ -311,51 +310,58 @@ public class MainActivity extends AppCompatActivity
         return this.supports_camera2;
     }
 
-    public boolean supportsAutoStabilise() {
+    public boolean supportsAutoStabilise()
+    {
         return this.supports_auto_stabilise;
     }
 
-    void requestCameraPermission() {
-        if( MyDebug.LOG )
+    void requestCameraPermission()
+    {
+        if (MyDebug.LOG)
             Log.d(TAG, "requestCameraPermission");
-        if( Build.VERSION.SDK_INT < Build.VERSION_CODES.M ) {
-            if( MyDebug.LOG )
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.M)
+        {
+            if (MyDebug.LOG)
                 Log.e(TAG, "shouldn't be requesting permissions for pre-Android M!");
             return;
         }
 
-        if( ActivityCompat.shouldShowRequestPermissionRationale(this, Manifest.permission.CAMERA) ) {
+        if (ActivityCompat.shouldShowRequestPermissionRationale(this, Manifest.permission.CAMERA))
+        {
             // Show an explanation to the user *asynchronously* -- don't block
             // this thread waiting for the user's response! After the user
             // sees the explanation, try again to request the permission.
             showRequestPermissionRationale(MY_PERMISSIONS_REQUEST_CAMERA);
-        }
-        else {
+        } else
+        {
             // Can go ahead and request the permission
-            if( MyDebug.LOG )
+            if (MyDebug.LOG)
                 Log.d(TAG, "requesting camera permission...");
             ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.CAMERA}, MY_PERMISSIONS_REQUEST_CAMERA);
         }
     }
 
-    void requestStoragePermission() {
-        if( MyDebug.LOG )
+    void requestStoragePermission()
+    {
+        if (MyDebug.LOG)
             Log.d(TAG, "requestStoragePermission");
-        if( Build.VERSION.SDK_INT < Build.VERSION_CODES.M ) {
-            if( MyDebug.LOG )
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.M)
+        {
+            if (MyDebug.LOG)
                 Log.e(TAG, "shouldn't be requesting permissions for pre-Android M!");
             return;
         }
 
-        if( ActivityCompat.shouldShowRequestPermissionRationale(this, Manifest.permission.WRITE_EXTERNAL_STORAGE) ) {
+        if (ActivityCompat.shouldShowRequestPermissionRationale(this, Manifest.permission.WRITE_EXTERNAL_STORAGE))
+        {
             // Show an explanation to the user *asynchronously* -- don't block
             // this thread waiting for the user's response! After the user
             // sees the explanation, try again to request the permission.
             showRequestPermissionRationale(MY_PERMISSIONS_REQUEST_STORAGE);
-        }
-        else {
+        } else
+        {
             // Can go ahead and request the permission
-            if( MyDebug.LOG )
+            if (MyDebug.LOG)
                 Log.d(TAG, "requesting storage permission...");
             ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.WRITE_EXTERNAL_STORAGE}, MY_PERMISSIONS_REQUEST_STORAGE);
         }
@@ -436,12 +442,14 @@ public class MainActivity extends AppCompatActivity
         Log.d(TAG, "Imaging will begin in " + delayTime + " seconds");
         tvEventLog.append("\nImaging will begin in " + delayTime + " seconds");
 
-        photo_mode_values.add( MyApplicationInterface.PhotoMode.Standard );
-        if( supportsDRO() ) {
-            photo_mode_values.add( MyApplicationInterface.PhotoMode.DRO );
+        photo_mode_values.add(MyApplicationInterface.PhotoMode.Standard);
+        if (supportsDRO())
+        {
+            photo_mode_values.add(MyApplicationInterface.PhotoMode.DRO);
         }
-        if( supportsHDR() ) {
-            photo_mode_values.add( MyApplicationInterface.PhotoMode.HDR );
+        if (supportsHDR())
+        {
+            photo_mode_values.add(MyApplicationInterface.PhotoMode.HDR);
         }
 
         getWSISettings();
@@ -470,7 +478,7 @@ public class MainActivity extends AppCompatActivity
         tvStatusInfo = (TextView) findViewById(R.id.tvStatusInfo);
         tvStatusInfo.setText("idle");
 
-        tvConnectionStatus  = (TextView) findViewById(R.id.tvConnectionStatus);
+        tvConnectionStatus = (TextView) findViewById(R.id.tvConnectionStatus);
 
         runButton = (Button) findViewById(R.id.buttonRun);
         assert runButton != null;
@@ -525,10 +533,11 @@ public class MainActivity extends AppCompatActivity
 
         textFormatter = new TextFormatter(this);
 
-        if( activityManager.getLargeMemoryClass() >= 128 ) {
+        if (activityManager.getLargeMemoryClass() >= 128)
+        {
             supports_auto_stabilise = true;
         }
-        if( MyDebug.LOG )
+        if (MyDebug.LOG)
             Log.d(TAG, "supports_auto_stabilise? " + supports_auto_stabilise);
 
         // determine whether we support Camera2 API
@@ -575,34 +584,52 @@ public class MainActivity extends AppCompatActivity
 
         afEnabled = sharedPref.getBoolean("enableAF", true);
 
-        if(afEnabled)
+        if (afEnabled)
         {
             preview.updateFocus("focus_mode_auto", false, true);
-        }
-        else
+        } else
         {
             preview.updateFocus("focus_mode_infinity", false, true);
         }
 
         hdrPref = Integer.parseInt(sharedPref.getString("hdrPref", "0"));
 
+        keepFiles = sharedPref.getBoolean("keepfiles", false);
+
         MyApplicationInterface.PhotoMode new_photo_mode = photo_mode_values.get(hdrPref);
 
         SharedPreferences.Editor editor = sharedPref.edit();
-        if( new_photo_mode == MyApplicationInterface.PhotoMode.Standard ) {
+        if (new_photo_mode == MyApplicationInterface.PhotoMode.Standard)
+        {
             editor.putString(PreferenceKeys.getPhotoModePreferenceKey(), "preference_photo_mode_std");
         }
-        else if( new_photo_mode == MyApplicationInterface.PhotoMode.DRO ) {
-            editor.putString(PreferenceKeys.getPhotoModePreferenceKey(), "preference_photo_mode_dro");
+        else if (new_photo_mode == MyApplicationInterface.PhotoMode.DRO)
+        {
+            if( supportsDRO() )
+            {
+                editor.putString(PreferenceKeys.getPhotoModePreferenceKey(), "preference_photo_mode_dro");
+            }
+            else
+            {
+                Log.e(TAG, "Camera does not support DRO imaging. Using standard mode.");
+                editor.putString(PreferenceKeys.getPhotoModePreferenceKey(), "preference_photo_mode_std");
+            }
         }
-        else if( new_photo_mode == MyApplicationInterface.PhotoMode.HDR ) {
-            editor.putString(PreferenceKeys.getPhotoModePreferenceKey(), "preference_photo_mode_hdr");
+        else if (new_photo_mode == MyApplicationInterface.PhotoMode.HDR)
+        {
+            if(supportsHDR())
+            {
+                editor.putString(PreferenceKeys.getPhotoModePreferenceKey(), "preference_photo_mode_hdr");
+            }
+            else
+            {
+                Log.e(TAG, "Camera does not support DRO imaging. Using standard mode.");
+                editor.putString(PreferenceKeys.getPhotoModePreferenceKey(), "preference_photo_mode_std");
+            }
         }
-        else if( new_photo_mode == MyApplicationInterface.PhotoMode.ExpoBracketing ) {
-            editor.putString(PreferenceKeys.getPhotoModePreferenceKey(), "preference_photo_mode_expo_bracketing");
-        }
-        else {
-            if( MyDebug.LOG )
+        else
+        {
+            if (MyDebug.LOG)
                 Log.e(TAG, "unknown new_photo_mode: " + new_photo_mode);
         }
         editor.apply();
@@ -736,42 +763,46 @@ public class MainActivity extends AppCompatActivity
         }
     }
 
-    /** Show a "rationale" to the user for needing a particular permission, then request that permission again
-     *  once they close the dialog.
+    /**
+     * Show a "rationale" to the user for needing a particular permission, then request that permission again
+     * once they close the dialog.
      */
     @TargetApi(Build.VERSION_CODES.JELLY_BEAN_MR1)
-    private void showRequestPermissionRationale(final int permission_code) {
-        if( MyDebug.LOG )
+    private void showRequestPermissionRationale(final int permission_code)
+    {
+        if (MyDebug.LOG)
             Log.d(TAG, "showRequestPermissionRational: " + permission_code);
-        if( Build.VERSION.SDK_INT < Build.VERSION_CODES.M ) {
-            if( MyDebug.LOG )
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.M)
+        {
+            if (MyDebug.LOG)
                 Log.e(TAG, "shouldn't be requesting permissions for pre-Android M!");
             return;
         }
 
         boolean ok = true;
-        String [] permissions = null;
+        String[] permissions = null;
         int message_id = 0;
-        if( permission_code == MY_PERMISSIONS_REQUEST_CAMERA ) {
-            if( MyDebug.LOG )
+        if (permission_code == MY_PERMISSIONS_REQUEST_CAMERA)
+        {
+            if (MyDebug.LOG)
                 Log.d(TAG, "display rationale for camera permission");
             permissions = new String[]{Manifest.permission.CAMERA};
             message_id = R.string.permission_rationale_camera;
-        }
-        else if( permission_code == MY_PERMISSIONS_REQUEST_STORAGE ) {
-            if( MyDebug.LOG )
+        } else if (permission_code == MY_PERMISSIONS_REQUEST_STORAGE)
+        {
+            if (MyDebug.LOG)
                 Log.d(TAG, "display rationale for storage permission");
             permissions = new String[]{Manifest.permission.WRITE_EXTERNAL_STORAGE};
             message_id = R.string.permission_rationale_storage;
-        }
-        else if( permission_code == MY_PERMISSIONS_REQUEST_LOCATION ) {
-            if( MyDebug.LOG )
+        } else if (permission_code == MY_PERMISSIONS_REQUEST_LOCATION)
+        {
+            if (MyDebug.LOG)
                 Log.d(TAG, "display rationale for location permission");
             permissions = new String[]{Manifest.permission.ACCESS_FINE_LOCATION, Manifest.permission.ACCESS_COARSE_LOCATION};
             message_id = R.string.permission_rationale_location;
-        }
-        else {
-            if( MyDebug.LOG )
+        } else
+        {
+            if (MyDebug.LOG)
                 Log.e(TAG, "showRequestPermissionRational unknown permission_code: " + permission_code);
             ok = false;
         }
@@ -780,19 +811,19 @@ public class MainActivity extends AppCompatActivity
         {
             final String[] permissions_f = permissions;
             new AlertDialog.Builder(this)
-                .setTitle(R.string.permission_rationale_title)
-                .setMessage(message_id)
-                .setIcon(android.R.drawable.ic_dialog_alert)
-                .setPositiveButton(android.R.string.ok, null)
-                .setOnDismissListener(new DialogInterface.OnDismissListener()
-                {
-                    public void onDismiss(DialogInterface dialog)
+                    .setTitle(R.string.permission_rationale_title)
+                    .setMessage(message_id)
+                    .setIcon(android.R.drawable.ic_dialog_alert)
+                    .setPositiveButton(android.R.string.ok, null)
+                    .setOnDismissListener(new DialogInterface.OnDismissListener()
                     {
-                        if (MyDebug.LOG)
-                            Log.d(TAG, "requesting permission...");
-                        ActivityCompat.requestPermissions(MainActivity.this, permissions_f, permission_code);
-                    }
-                }).show();
+                        public void onDismiss(DialogInterface dialog)
+                        {
+                            if (MyDebug.LOG)
+                                Log.d(TAG, "requesting permission...");
+                            ActivityCompat.requestPermissions(MainActivity.this, permissions_f, permission_code);
+                        }
+                    }).show();
         }
     }
 
@@ -825,8 +856,9 @@ public class MainActivity extends AppCompatActivity
             }
         }
 
-        if( !orig_save_location.equals(mediaStorageDir.toString()) ) {
-            if( MyDebug.LOG )
+        if (!orig_save_location.equals(mediaStorageDir.toString()))
+        {
+            if (MyDebug.LOG)
                 Log.d(TAG, "changed save_folder to: " + this.applicationInterface.getStorageUtils().getSaveLocation());
             SharedPreferences.Editor editor = sharedPreferences.edit();
             editor.putString(PreferenceKeys.getSaveLocationPreferenceKey(), mediaStorageDir.toString());
@@ -861,7 +893,7 @@ public class MainActivity extends AppCompatActivity
         preview = new Preview(applicationInterface, ((ViewGroup) findViewById(R.id.camera_preview)));
         preview.onResume();
 
-        if(preview.hasSurface())
+        if (preview.hasSurface())
         {
             beginImaging();
         }
@@ -910,14 +942,17 @@ public class MainActivity extends AppCompatActivity
         }
     }
 
-    private void checkNetworkStatus() {
+    private void checkNetworkStatus()
+    {
         // check internet connection
-        if (serverClient.isConnected()) {
+        if (serverClient.isConnected())
+        {
             tvConnectionStatus.setText("online");
             tvConnectionStatus.setTextColor(getResources().getColor(R.color.darkGreen));
             d(TAG, "Device is online.");
             tvEventLog.append("\nDevice is online.");
-        } else {
+        } else
+        {
             tvConnectionStatus.setText("offline");
             tvConnectionStatus.setTextColor(Color.BLACK);
             d(TAG, "Device is offline.");
