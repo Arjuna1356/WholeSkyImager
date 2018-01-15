@@ -450,7 +450,7 @@ public class StorageUtils {
 //			String prefix = sharedPreferences.getString(PreferenceKeys.getSavePhotoPrefixPreferenceKey(), "IMG_");
 //			mediaFilename = prefix + timeStamp + suffix + index + "." + extension;
 			int wahrsisModelNr = Integer.parseInt(sharedPreferences.getString("wahrsisNo", "404"));
-            mediaFilename = timeStamp + "-wahrsis" + wahrsisModelNr + suffix + "." + extension;
+            mediaFilename = timeStamp + "_wahrsis" + wahrsisModelNr + suffix + "." + extension;
 		}
 		else {
 			// throw exception as this is a programming error

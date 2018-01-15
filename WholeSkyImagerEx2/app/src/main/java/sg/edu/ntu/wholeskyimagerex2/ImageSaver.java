@@ -612,7 +612,7 @@ public class ImageSaver extends Thread {
                 for(int i=0;i<request.jpeg_images.size();i++) {
                     // note, even if one image fails, we still try saving the other images - might as well give the user as many images as we can...
                     byte [] image = request.jpeg_images.get(i);
-                    String filename_suffix = "-" + evState[i];
+                    String filename_suffix = "_" + evState[i];
                     // don't update the thumbnails, only do this for the final HDR image - so user doesn't think it's complete, click gallery, then wonder why the final image isn't there
                     // also don't mark these images as being shared
                     if( !saveSingleImageNow(request, image, null, filename_suffix, false, false) ) {
@@ -686,7 +686,7 @@ public class ImageSaver extends Thread {
             int base_image_id = ((request.jpeg_images.size()-1)/2);
             if( MyDebug.LOG )
                 Log.d(TAG, "base_image_id: " + base_image_id);
-            String suffix = request.jpeg_images.size() == 1 ? "-DRO" : "-HDR";
+            String suffix = request.jpeg_images.size() == 1 ? "_DRO" : "_HDR";
             success = saveSingleImageNow(request, request.jpeg_images.get(base_image_id), hdr_bitmap, suffix, true, true);
             if( MyDebug.LOG && !success )
                 Log.e(TAG, "saveSingleImageNow failed for hdr image");
@@ -1335,53 +1335,6 @@ public class ImageSaver extends Thread {
                         storageUtils.announceUri(saveUri, true, false);
                     }
                 }
-
-                main_activity.runOnUiThread(new Runnable() {
-                    @Override
-                    public void run() {
-                        main_activity.captureComplete();
-                    }
-                });
-
-                SharedPreferences sharedPreferences = PreferenceManager.getDefaultSharedPreferences(applicationInterface.getContext());
-                int wahrsisModelNr = Integer.parseInt(sharedPreferences.getString("wahrsisNo", "404"));
-                String photoMode = sharedPreferences.getString("hdrPref", "0");
-
-                if(photoMode.equals("2"))
-                {
-                    boolean sendImage = false;
-
-                    if( image_capture_intent )
-                    {
-                        if(request.image_capture_intent_uri.toString().contains("HDR"))
-                        {
-                            sendImage = true;
-                        }
-                    }
-                    else if( storageUtils.isUsingSAF() )
-                    {
-                        if(saveUri.toString().contains("HDR"))
-                        {
-                            sendImage = true;
-                        }
-                    }
-                    else
-                    {
-                        if(picFile.getAbsolutePath().contains("HDR"))
-                        {
-                            sendImage = true;
-                        }
-                    }
-
-                    if(sendImage)
-                    {
-                        main_activity.getServerClient().httpPOST(timeStamp, wahrsisModelNr);
-                    }
-                }
-                else
-                {
-                    main_activity.getServerClient().httpPOST(timeStamp, wahrsisModelNr);
-                }
             }
         }
         catch(FileNotFoundException e) {
@@ -1488,6 +1441,61 @@ public class ImageSaver extends Thread {
         if( MyDebug.LOG ) {
             Log.d(TAG, "Save single image performance: total time: " + (System.currentTimeMillis() - time_s));
         }
+
+        SharedPreferences sharedPreferences = PreferenceManager.getDefaultSharedPreferences(applicationInterface.getContext());
+        int wahrsisModelNr = Integer.parseInt(sharedPreferences.getString("wahrsisNo", "404"));
+        String photoMode = sharedPreferences.getString("hdrPref", "0");
+
+        if(photoMode.equals("2"))
+        {
+            boolean sendImage = false;
+
+            if( image_capture_intent )
+            {
+                if(request.image_capture_intent_uri.toString().contains("HDR"))
+                {
+                    sendImage = true;
+                }
+            }
+            else if( storageUtils.isUsingSAF() )
+            {
+                if(saveUri.toString().contains("HDR"))
+                {
+                    sendImage = true;
+                }
+            }
+            else
+            {
+                if(picFile.getAbsolutePath().contains("HDR"))
+                {
+                    sendImage = true;
+                }
+            }
+
+            if(sendImage)
+            {
+                main_activity.runOnUiThread(new Runnable() {
+                    @Override
+                    public void run() {
+                        main_activity.captureComplete();
+                    }
+                });
+
+                main_activity.getServerClient().httpPOST(timeStamp, wahrsisModelNr);
+            }
+        }
+        else
+        {
+            main_activity.runOnUiThread(new Runnable() {
+                @Override
+                public void run() {
+                    main_activity.captureComplete();
+                }
+            });
+
+            main_activity.getServerClient().httpPOST(timeStamp, wahrsisModelNr);
+        }
+
         return success;
     }
 

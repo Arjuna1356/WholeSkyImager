@@ -58,7 +58,6 @@ public class MyApplicationInterface implements ApplicationInterface {
 		Standard,
 		DRO, // single image "fake" HDR
 		HDR, // HDR created from multiple (expo bracketing) images
-		ExpoBracketing // take multiple expo bracketed images, without combining to a single image
 	}
 
 	private final MainActivity main_activity;
@@ -564,7 +563,7 @@ public class MyApplicationInterface implements ApplicationInterface {
 	@Override
 	public boolean isExpoBracketingPref() {
 		PhotoMode photo_mode = getPhotoMode();
-		if( photo_mode == PhotoMode.HDR || photo_mode == PhotoMode.ExpoBracketing )
+		if( photo_mode == PhotoMode.HDR )
 			return true;
 		return false;
 	}
@@ -636,9 +635,6 @@ public class MyApplicationInterface implements ApplicationInterface {
 		boolean hdr = photo_mode_pref.equals("preference_photo_mode_hdr");
 		if( hdr && main_activity.supportsHDR() )
 			return PhotoMode.HDR;
-		boolean expo_bracketing = photo_mode_pref.equals("preference_photo_mode_expo_bracketing");
-		if( expo_bracketing && main_activity.supportsExpoBracketing() )
-			return PhotoMode.ExpoBracketing;
 		return PhotoMode.Standard;
 	}
 
@@ -1074,26 +1070,16 @@ public class MyApplicationInterface implements ApplicationInterface {
 			Log.d(TAG, "onBurstPictureTaken: received " + images.size() + " images");
 
 		boolean success;
-		PhotoMode photo_mode = getPhotoMode();
-		if( photo_mode == PhotoMode.HDR ) {
-			if( MyDebug.LOG )
-				Log.d(TAG, "HDR mode");
-			SharedPreferences sharedPreferences = PreferenceManager.getDefaultSharedPreferences(getContext());
-			boolean save_expo =  sharedPreferences.getBoolean(PreferenceKeys.getHDRSaveExpoPreferenceKey(), false);
-			if( MyDebug.LOG )
-				Log.d(TAG, "save_expo: " + save_expo);
 
-			success = saveImage(true, save_expo, images, current_date, timeStamp);
-		}
-		else {
-			if( MyDebug.LOG ) {
-				Log.d(TAG, "exposure bracketing mode mode");
-				if( photo_mode != PhotoMode.ExpoBracketing )
-					Log.e(TAG, "onBurstPictureTaken called with unexpected photo mode?!: " + photo_mode);
-			}
+        if( MyDebug.LOG )
+            Log.d(TAG, "HDR mode");
+        SharedPreferences sharedPreferences = PreferenceManager.getDefaultSharedPreferences(getContext());
+        boolean save_expo =  sharedPreferences.getBoolean(PreferenceKeys.getHDRSaveExpoPreferenceKey(), false);
+        if( MyDebug.LOG )
+            Log.d(TAG, "save_expo: " + save_expo);
 
-			success = saveImage(false, true, images, current_date, timeStamp);
-		}
+        success = saveImage(true, save_expo, images, current_date, timeStamp);
+
 		return success;
 	}
 

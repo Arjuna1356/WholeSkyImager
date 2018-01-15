@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string-array name="hdrArray">
-        <item>Normal</item>
+        <item>Standard</item>
         <item>DRO</item>
         <item>HDR</item>
     </string-array>
@@ -9,6 +9,28 @@
         <item>0</item>
         <item>1</item>
         <item>2</item>
+    </string-array>
+    <string-array name="isoArray">
+        <item>Auto</item>
+        <item>50</item>
+        <item>100</item>
+        <item>200</item>
+        <item>400</item>
+        <item>800</item>
+        <item>1600</item>
+        <item>3200</item>
+        <item>6400</item>
+    </string-array>
+    <string-array name="isoValues">
+        <item>auto</item>
+        <item>50</item>
+        <item>100</item>
+        <item>200</item>
+        <item>400</item>
+        <item>800</item>
+        <item>1600</item>
+        <item>3200</item>
+        <item>6400</item>
     </string-array>
     <string-array name="flash_icons">
         <item>drawable/flash_off</item>
