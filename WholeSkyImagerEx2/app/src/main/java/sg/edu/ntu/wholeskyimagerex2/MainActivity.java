@@ -28,8 +28,6 @@ import android.renderscript.RenderScript;
 
 import android.support.annotation.NonNull;
 import android.support.v4.app.ActivityCompat;
-import android.support.v4.app.FragmentManager;
-import android.support.v4.app.FragmentTransaction;
 import android.support.v4.content.ContextCompat;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
@@ -42,6 +40,7 @@ import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
+import android.view.ViewGroup;
 import android.view.Window;
 import android.view.WindowManager;
 
@@ -75,7 +74,7 @@ public class MainActivity extends AppCompatActivity
 
     private Button runButton;
     private Button stopButton;
-    private FrameLayout cameraFrame;
+    private FrameLayout frameLayout;
     private TextView tvEventLog;
     private TextView tvStatusInfo;
     private TextView tvConnectionStatus = null;
@@ -99,13 +98,6 @@ public class MainActivity extends AppCompatActivity
 
     private String authorizationToken;
     private WSIServerClient serverClient;
-
-    // Fragment management
-    private FragmentManager myFragmentManager = null;
-    private FragmentTransaction transaction = null;
-
-    private MainFragment mMainFragment = null;
-    private SettingsFragment mSettingsFragment = null;
 
     @Override
     protected void onCreate(Bundle savedInstanceState)
@@ -162,10 +154,8 @@ public class MainActivity extends AppCompatActivity
         switch (id)
         {
             case R.id.action_settings:
-                transaction = myFragmentManager.beginTransaction();
-                transaction.replace(R.id.main_layout, mSettingsFragment, "Settings");
-                transaction.addToBackStack(null);
-                transaction.commit();
+                Intent intentSettings = new Intent(this, SettingsActivity.class);
+                startActivity(intentSettings);
                 return true;
 
             default:
@@ -467,36 +457,6 @@ public class MainActivity extends AppCompatActivity
         mBackgroundHandler.postDelayed(imagingRunnable, delayTime * 1000);
     }
 
-    public void setRunButton(Button runButton)
-    {
-        this.runButton = runButton;
-    }
-
-    public void setStopButton(Button stopButton)
-    {
-        this.stopButton = stopButton;
-    }
-
-    public void setStatusInfo(TextView statusInfo)
-    {
-        this.tvStatusInfo = statusInfo;
-    }
-
-    public void setConnectionStatus(TextView connectionStatus)
-    {
-        this.tvConnectionStatus = connectionStatus;
-    }
-
-    public void setEventLog(TextView eventLog)
-    {
-        this.tvEventLog = eventLog;
-    }
-
-    public void setCameraFrame(FrameLayout cameraFrame)
-    {
-        this.cameraFrame = cameraFrame;
-    }
-
     private void initialize(Bundle savedInstanceState)
     {
         long debug_time = 0;
@@ -506,59 +466,16 @@ public class MainActivity extends AppCompatActivity
             debug_time = System.currentTimeMillis();
         }
 
-        myFragmentManager = getSupportFragmentManager();
-        mMainFragment = new MainFragment();
-        mSettingsFragment = new SettingsFragment();
+        frameLayout = (FrameLayout) findViewById(R.id.camera_preview);
 
-        if (savedInstanceState == null) {
-            // Initiate the intial main Fragment
-            transaction = myFragmentManager.beginTransaction();
-            transaction.add(R.id.main_layout, mMainFragment, "mainFragment");
-            transaction.commit();
-        }
-
-        sharedPref = PreferenceManager.getDefaultSharedPreferences(this);
-
-        activityManager = (ActivityManager) getSystemService(ACTIVITY_SERVICE);
-
-        applicationInterface = new MyApplicationInterface(this, savedInstanceState);
-        if (MyDebug.LOG)
-            Log.d(TAG, "onCreate: time after creating application interface: " + (System.currentTimeMillis() - debug_time));
-
-        textFormatter = new TextFormatter(this);
-
-        if( activityManager.getLargeMemoryClass() >= 128 ) {
-            supports_auto_stabilise = true;
-        }
-        if( MyDebug.LOG )
-            Log.d(TAG, "supports_auto_stabilise? " + supports_auto_stabilise);
-
-        // determine whether we support Camera2 API
-        initCamera2Support();
-
-        // show "about" dialog for first time use; also set some per-device defaults
-        boolean has_done_first_time = sharedPref.contains(PreferenceKeys.getFirstTimePreferenceKey());
-
-        if (!has_done_first_time)
-        {
-            setDeviceDefaults();
-            setFirstTimeFlag();
-        }
-
-        setSaveLocation();
-
-        // initiate server client
-        serverClient = new WSIServerClient(this, "https://www.visuo.adsc.com.sg/api/skypicture/", authorizationToken);
-    }
-
-    public void fragmentInitialize()
-    {
+        tvEventLog = (TextView) findViewById(R.id.tvEventLog);
         tvEventLog.setMovementMethod(new ScrollingMovementMethod());
 
         Date d2 = new Date();
         CharSequence dateTime2 = DateFormat.format("HH:mm:ss", d2.getTime());
         tvEventLog.append("\nTime: " + dateTime2);
 
+        tvStatusInfo = (TextView) findViewById(R.id.tvStatusInfo);
         tvStatusInfo.setText("idle");
 
         tvConnectionStatus = (TextView) findViewById(R.id.tvConnectionStatus);
@@ -587,6 +504,8 @@ public class MainActivity extends AppCompatActivity
             }
         });
 
+        stopButton = (Button) findViewById(R.id.buttonStop);
+        assert stopButton != null;
         stopButton.setOnClickListener(new View.OnClickListener()
         {
             @Override
@@ -971,7 +890,7 @@ public class MainActivity extends AppCompatActivity
     private void openCamera()
     {
         // set up the camera and its preview
-        preview = new Preview(applicationInterface, cameraFrame);
+        preview = new Preview(applicationInterface, ((ViewGroup) findViewById(R.id.camera_preview)));
         preview.onResume();
 
         if (preview.hasSurface())

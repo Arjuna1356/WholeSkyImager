@@ -11,7 +11,7 @@
 
     <!-- Strings related to Settings -->
 
-    <string-array name="multi_select_list_preference_default_value"/>
+    <string-array name="multi_select_list_preference_default_value" />
 
     <string name="pref_title_system_sync_settings">System sync settings</string>
 
@@ -188,7 +188,7 @@
     <string name="saf_permission_failed">Unable to save to this folder</string>
 
     <!-- the permission names such as Microphone should match what Android calls them in the App permission settings -->
-    <string name="permission_location_not_available">Location permission is not available</string>
+   <string name="permission_location_not_available">Location permission is not available</string>
 
     <string name="photo_mode">Photo Mode</string>
     <string name="photo_mode_standard">Standard</string>
@@ -206,9 +206,6 @@
     <string name="permission_rationale_record_audio">Microphone permission is required to record video with audio</string>
     <string name="permission_rationale_location">Location permission is required for geotagging</string>
 
-    <string name="seconds_abbreviation">s</string>
-
-    <!-- TODO: Remove or change this placeholder text -->
-    <string name="hello_blank_fragment">Hello blank fragment</string> <!-- short for seconds -->
+    <string name="seconds_abbreviation">s</string> <!-- short for seconds -->
 
 </resources>
