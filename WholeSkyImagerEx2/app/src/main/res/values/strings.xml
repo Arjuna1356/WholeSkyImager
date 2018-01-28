@@ -205,6 +205,7 @@
     <string name="permission_rationale_storage">Storage read/write permission is required to save photos</string>
     <string name="permission_rationale_record_audio">Microphone permission is required to record video with audio</string>
     <string name="permission_rationale_location">Location permission is required for geotagging</string>
+    <string name="permission_rationale_settings">Settings permission is required for screen brightness</string>
 
     <string name="seconds_abbreviation">s</string> <!-- short for seconds -->
 

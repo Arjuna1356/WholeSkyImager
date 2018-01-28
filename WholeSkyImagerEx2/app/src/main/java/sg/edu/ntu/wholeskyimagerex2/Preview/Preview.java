@@ -229,6 +229,8 @@ public class Preview implements SurfaceHolder.Callback, TextureView.SurfaceTextu
 	private Runnable reset_continuous_focus_runnable;
 	private boolean autofocus_in_continuous_mode;
 
+    private boolean initialOpen = true;
+
 	// for testing; must be volatile for test project reading the state
 	private boolean is_test; // whether called from OpenCamera.test testing
 	public volatile int count_cameraStartPreview;
@@ -241,13 +243,14 @@ public class Preview implements SurfaceHolder.Callback, TextureView.SurfaceTextu
 
     private ViewGroup previewSurface;
 
-	public Preview(ApplicationInterface applicationInterface, ViewGroup parent) {
+	public Preview(ApplicationInterface applicationInterface, ViewGroup parent, boolean initialOpen) {
 		if( MyDebug.LOG ) {
 			Log.d(TAG, "new Preview");
 		}
 
 		this.applicationInterface = applicationInterface;
         previewSurface = parent;
+        this.initialOpen = initialOpen;
 
 		Activity activity = (Activity)this.getContext();
 		if( activity.getIntent() != null && activity.getIntent().getExtras() != null ) {
@@ -589,39 +592,39 @@ public class Preview implements SurfaceHolder.Callback, TextureView.SurfaceTextu
 		return applicationInterface.getContext();
 	}
 
-	private void reconnectCamera(boolean quiet) {
-		if( MyDebug.LOG )
-			Log.d(TAG, "reconnectCamera()");
-		if( camera_controller != null ) { // just to be safe
-			try {
-				camera_controller.reconnect();
-				this.setPreviewPaused(false);
-			}
-			catch(CameraControllerException e) {
-				if( MyDebug.LOG )
-					Log.e(TAG, "failed to reconnect to camera");
-				e.printStackTrace();
-				closeCamera(false, null);
-			}
-			try {
-				tryAutoFocus(false, false);
-			}
-			catch(RuntimeException e) {
-				if( MyDebug.LOG )
-					Log.e(TAG, "tryAutoFocus() threw exception: " + e.getMessage());
-				e.printStackTrace();
-				// this happens on Nexus 7 if trying to record video at bitrate 50Mbits or higher - it's fair enough that it fails, but we need to recover without a crash!
-				// not safe to call closeCamera, as any call to getParameters may cause a RuntimeException
-				// update: can no longer reproduce failures on Nexus 7?!
-				this.is_preview_started = false;
-
-				camera_controller.release();
-				camera_controller = null;
-				camera_open_state = CameraOpenState.CAMERAOPENSTATE_CLOSED;
-				openCamera();
-			}
-		}
-	}
+//	private void reconnectCamera(boolean quiet) {
+//		if( MyDebug.LOG )
+//			Log.d(TAG, "reconnectCamera()");
+//		if( camera_controller != null ) { // just to be safe
+//			try {
+//				camera_controller.reconnect();
+//				this.setPreviewPaused(false);
+//			}
+//			catch(CameraControllerException e) {
+//				if( MyDebug.LOG )
+//					Log.e(TAG, "failed to reconnect to camera");
+//				e.printStackTrace();
+//				closeCamera(false, null);
+//			}
+//			try {
+//				tryAutoFocus(false, false);
+//			}
+//			catch(RuntimeException e) {
+//				if( MyDebug.LOG )
+//					Log.e(TAG, "tryAutoFocus() threw exception: " + e.getMessage());
+//				e.printStackTrace();
+//				// this happens on Nexus 7 if trying to record video at bitrate 50Mbits or higher - it's fair enough that it fails, but we need to recover without a crash!
+//				// not safe to call closeCamera, as any call to getParameters may cause a RuntimeException
+//				// update: can no longer reproduce failures on Nexus 7?!
+//				this.is_preview_started = false;
+//
+//				camera_controller.release();
+//				camera_controller = null;
+//				camera_open_state = CameraOpenState.CAMERAOPENSTATE_CLOSED;
+//				openCamera();
+//			}
+//		}
+//	}
 
 	private interface CloseCameraCallback {
 		void onClosed();
@@ -860,6 +863,14 @@ public class Preview implements SurfaceHolder.Callback, TextureView.SurfaceTextu
 				// return for now - the application should try to reopen the camera if permission is granted
 				return;
 			}
+			if( ContextCompat.checkSelfPermission(getContext(), Manifest.permission.WRITE_SETTINGS) != PackageManager.PERMISSION_GRANTED ) {
+				if( MyDebug.LOG )
+					Log.d(TAG, "settings permission not available");
+				has_permissions = false;
+				applicationInterface.requestSettingsPermission();
+				// return for now - the application should try to reopen the camera if permission is granted
+				return;
+			}
 			if( MyDebug.LOG )
 				Log.d(TAG, "permissions available");
 		}
@@ -956,6 +967,11 @@ public class Preview implements SurfaceHolder.Callback, TextureView.SurfaceTextu
 		if( MyDebug.LOG ) {
 			Log.d(TAG, "openCamera: total time to open camera: " + (System.currentTimeMillis() - debug_time));
 		}
+
+		if(!initialOpen)
+        {
+            takePicturePressed();
+        }
 	}
 
 	/** Open the camera - this should be called from background thread, to avoid hogging the UI thread.
@@ -1065,7 +1081,7 @@ public class Preview implements SurfaceHolder.Callback, TextureView.SurfaceTextu
 			Log.d(TAG, "openCamera: total time for cameraOpened: " + (System.currentTimeMillis() - debug_time));
 		}
 
-		applicationInterface.beginImaging();
+//		applicationInterface.beginImaging();
 	}
 
 
@@ -1075,38 +1091,38 @@ public class Preview implements SurfaceHolder.Callback, TextureView.SurfaceTextu
 	 *  If camera_open_state is already CAMERAOPENSTATE_OPENING, or the camera is already open,
 	 *  this method does nothing.
 	 */
-	public void retryOpenCamera() {
-		if( MyDebug.LOG )
-			Log.d(TAG, "retryOpenCamera()");
-		if( camera_controller == null ) {
-			if( MyDebug.LOG )
-				Log.d(TAG, "try to reopen camera");
-			this.openCamera();
-		}
-		else {
-			if( MyDebug.LOG )
-				Log.d(TAG, "camera already open");
-		}
-	}
+//	public void retryOpenCamera() {
+//		if( MyDebug.LOG )
+//			Log.d(TAG, "retryOpenCamera()");
+//		if( camera_controller == null ) {
+//			if( MyDebug.LOG )
+//				Log.d(TAG, "try to reopen camera");
+//			this.openCamera();
+//		}
+//		else {
+//			if( MyDebug.LOG )
+//				Log.d(TAG, "camera already open");
+//		}
+//	}
 
 	/** Closes and reopens the camera.
 	 *  The camera will be closed and opened on a background thread, so won't be available upon
 	 *  exit of this function.
 	 */
-	public void reopenCamera() {
-		if( MyDebug.LOG )
-			Log.d(TAG, "reopenCamera()");
-		//this.closeCamera(false, null);
-		//this.openCamera();
-		closeCamera(true, new CloseCameraCallback() {
-			@Override
-			public void onClosed() {
-				if( MyDebug.LOG )
-					Log.d(TAG, "CloseCameraCallback.onClosed");
-				openCamera();
-			}
-		});
-	}
+//	public void reopenCamera() {
+//		if( MyDebug.LOG )
+//			Log.d(TAG, "reopenCamera()");
+//		//this.closeCamera(false, null);
+//		//this.openCamera();
+//		closeCamera(true, new CloseCameraCallback() {
+//			@Override
+//			public void onClosed() {
+//				if( MyDebug.LOG )
+//					Log.d(TAG, "CloseCameraCallback.onClosed");
+//				openCamera();
+//			}
+//		});
+//	}
 
 	/** Returns false if we failed to open the camera because camera or storage permission wasn't available.
 	 */
@@ -1177,6 +1193,8 @@ public class Preview implements SurfaceHolder.Callback, TextureView.SurfaceTextu
 		else {
 			camera_controller.setRaw(false);
 		}
+
+        Log.d(TAG, "IsExpoBracketing: " + applicationInterface.isExpoBracketingPref());
 
 		if( this.supports_expo_bracketing && applicationInterface.isExpoBracketingPref() ) {
 			camera_controller.setExpoBracketing(true);

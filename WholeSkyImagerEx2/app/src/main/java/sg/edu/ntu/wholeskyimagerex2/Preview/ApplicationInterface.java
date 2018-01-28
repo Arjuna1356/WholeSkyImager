@@ -96,12 +96,13 @@ public interface ApplicationInterface {
 	void setZoomPref(int zoom);
 	void requestCameraPermission(); // for Android 6+: called when trying to open camera, but CAMERA permission not available
 	void requestStoragePermission(); // for Android 6+: called when trying to open camera, but WRITE_EXTERNAL_STORAGE permission not available
+	void requestSettingsPermission(); // for Android 6+: called when trying to open camera, but WRITE_SETTINGS permission not available
 	// Camera2 only modes:
 	void setExposureTimePref(long exposure_time);
 	void clearExposureTimePref();
 	void setFocusDistancePref(float focus_distance);
 
-	void beginImaging();
+//	void beginImaging();
 
 	// callbacks
 	boolean onPictureTaken(byte [] data, Date current_date, String timeStamp);

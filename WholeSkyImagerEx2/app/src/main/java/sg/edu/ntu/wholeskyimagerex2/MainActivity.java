@@ -12,6 +12,7 @@ import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.pm.ActivityInfo;
 import android.content.pm.PackageManager;
+import android.content.ContentResolver;
 
 import android.graphics.Color;
 import android.graphics.drawable.ColorDrawable;
@@ -43,10 +44,13 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.view.Window;
 import android.view.WindowManager;
+import android.view.WindowManager.LayoutParams;
 
 import android.widget.Button;
 import android.widget.FrameLayout;
 import android.widget.TextView;
+
+import android.provider.Settings;
 
 import java.io.File;
 import java.util.ArrayList;
@@ -90,11 +94,17 @@ public class MainActivity extends AppCompatActivity
     private boolean supports_camera2 = false;
     private boolean supports_auto_stabilise = false;
 
+    private boolean cameraInitialization = true;
+    private int screenBrightness = 0;
+    private ContentResolver cResolver;
+    private Window window;
+
     private List<MyApplicationInterface.PhotoMode> photo_mode_values = new ArrayList<>();
 
     final private int MY_PERMISSIONS_REQUEST_CAMERA = 0;
     final private int MY_PERMISSIONS_REQUEST_STORAGE = 1;
     final private int MY_PERMISSIONS_REQUEST_LOCATION = 2;
+    final private int MY_PERMISSIONS_REQUEST_SETTINGS = 3;
 
     private String authorizationToken;
     private WSIServerClient serverClient;
@@ -167,6 +177,7 @@ public class MainActivity extends AppCompatActivity
     public void onResume()
     {
         super.onResume();
+        Settings.System.putInt(cResolver, Settings.System.SCREEN_BRIGHTNESS_MODE, Settings.System.SCREEN_BRIGHTNESS_MODE_MANUAL);
         Log.d(TAG, "onResume");
         startBackgroundThread();
     }
@@ -183,6 +194,8 @@ public class MainActivity extends AppCompatActivity
         stopImaging();
 
         stopBackgroundThread();
+
+        Settings.System.putInt(cResolver, Settings.System.SCREEN_BRIGHTNESS_MODE, Settings.System.SCREEN_BRIGHTNESS_MODE_AUTOMATIC);
     }
 
     public void setupActionBar()
@@ -233,6 +246,12 @@ public class MainActivity extends AppCompatActivity
         }
 
         tvEventLog.append("\nSending failed. Error: " + statusCode);
+    }
+
+    public void closeCamera()
+    {
+        preview.onPause();
+        preview = null;
     }
 
     public TextView getTvEventLog()
@@ -293,6 +312,10 @@ public class MainActivity extends AppCompatActivity
 
     public boolean supportsHDR()
     {
+        Log.d(TAG, "HDR Build Version: " + (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP));
+        Log.d(TAG, "HDR Memory: " + (activityManager.getLargeMemoryClass() >= 128));
+        Log.d(TAG, "HDR Support: " + preview.supportsExpoBracketing());
+
         // we also require the device have sufficient memory to do the processing, simplest to use the same test as we do for auto-stabilise...
         // also require at least Android 5, for the Renderscript support in HDRProcessor
         return (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP
@@ -367,6 +390,32 @@ public class MainActivity extends AppCompatActivity
         }
     }
 
+    void requestSettingsPermission()
+    {
+        if (MyDebug.LOG)
+            Log.d(TAG, "requestSettingsPermission");
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.M)
+        {
+            if (MyDebug.LOG)
+                Log.e(TAG, "shouldn't be requesting permissions for pre-Android M!");
+            return;
+        }
+
+        if (ActivityCompat.shouldShowRequestPermissionRationale(this, Manifest.permission.WRITE_SETTINGS))
+        {
+            // Show an explanation to the user *asynchronously* -- don't block
+            // this thread waiting for the user's response! After the user
+            // sees the explanation, try again to request the permission.
+            showRequestPermissionRationale(MY_PERMISSIONS_REQUEST_SETTINGS);
+        } else
+        {
+            // Can go ahead and request the permission
+            if (MyDebug.LOG)
+                Log.d(TAG, "requesting settings permission...");
+            ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.WRITE_SETTINGS}, MY_PERMISSIONS_REQUEST_SETTINGS);
+        }
+    }
+
     @Override
     public void onRequestPermissionsResult(int requestCode, @NonNull String permissions[], @NonNull int[] grantResults)
     {
@@ -437,26 +486,6 @@ public class MainActivity extends AppCompatActivity
         }
     }
 
-    public void beginImaging()
-    {
-        Log.d(TAG, "Imaging will begin in " + delayTime + " seconds");
-        tvEventLog.append("\nImaging will begin in " + delayTime + " seconds");
-
-        photo_mode_values.add(MyApplicationInterface.PhotoMode.Standard);
-        if (supportsDRO())
-        {
-            photo_mode_values.add(MyApplicationInterface.PhotoMode.DRO);
-        }
-        if (supportsHDR())
-        {
-            photo_mode_values.add(MyApplicationInterface.PhotoMode.HDR);
-        }
-
-        getWSISettings();
-
-        mBackgroundHandler.postDelayed(imagingRunnable, delayTime * 1000);
-    }
-
     private void initialize(Bundle savedInstanceState)
     {
         long debug_time = 0;
@@ -492,7 +521,8 @@ public class MainActivity extends AppCompatActivity
 
                 if (status == 0)
                 {
-                    openCamera();
+//                    openCamera();
+                    beginImaging();
 
                     runButton.setText(getResources().getString(R.string.captureButton_text));
                     v.setTag(1);
@@ -557,6 +587,11 @@ public class MainActivity extends AppCompatActivity
         // initiate server client
         serverClient = new WSIServerClient(this, "https://www.visuo.adsc.com.sg/api/skypicture/", authorizationToken);
         checkNetworkStatus();
+
+        cResolver = getContentResolver();
+        window = getWindow();
+
+        screenBrightness = Settings.System.getInt(cResolver, Settings.System.SCREEN_BRIGHTNESS, 0);
     }
 
     /**
@@ -611,7 +646,8 @@ public class MainActivity extends AppCompatActivity
             }
             else
             {
-                Log.e(TAG, "Camera does not support DRO imaging. Using standard mode.");
+                Log.e(TAG, "Device does not support DRO imaging. Using standard mode.");
+                tvEventLog.append("\nDevice does not support DRO imaging. Using standard mode.");
                 editor.putString(PreferenceKeys.getPhotoModePreferenceKey(), "preference_photo_mode_std");
             }
         }
@@ -623,7 +659,8 @@ public class MainActivity extends AppCompatActivity
             }
             else
             {
-                Log.e(TAG, "Camera does not support DRO imaging. Using standard mode.");
+                Log.e(TAG, "Device does not support HDR imaging. Using standard mode.");
+                tvEventLog.append("\nDevice does not support HDR imaging. Using standard mode.");
                 editor.putString(PreferenceKeys.getPhotoModePreferenceKey(), "preference_photo_mode_std");
             }
         }
@@ -692,15 +729,27 @@ public class MainActivity extends AppCompatActivity
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M)
         {
             // Add permission for camera and let user grant the permission
-            if (ContextCompat.checkSelfPermission(this, Manifest.permission.CAMERA) != PackageManager.PERMISSION_GRANTED &&
-                    ContextCompat.checkSelfPermission(this, Manifest.permission.WRITE_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED)
+            if ((ContextCompat.checkSelfPermission(this, Manifest.permission.CAMERA) != PackageManager.PERMISSION_GRANTED))
             {
                 if (MyDebug.LOG)
                     Log.d(TAG, "camera permission not available");
                 applicationInterface.requestCameraPermission();
-                // return for now - the application should try to reopen the camera if permission is granted
-                return;
             }
+            // Add permission for camera and let user grant the permission
+            if ((ContextCompat.checkSelfPermission(this, Manifest.permission.WRITE_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED))
+            {
+                if (MyDebug.LOG)
+                    Log.d(TAG, "storage permission not available");
+                applicationInterface.requestStoragePermission();
+            }
+            // Add permission for camera and let user grant the permission
+            if ((ContextCompat.checkSelfPermission(this, Manifest.permission.WRITE_SETTINGS) != PackageManager.PERMISSION_GRANTED))
+            {
+                if (MyDebug.LOG)
+                    Log.d(TAG, "settings permission not available");
+                applicationInterface.requestSettingsPermission();
+            }
+            return;
         }
     }
 
@@ -800,6 +849,13 @@ public class MainActivity extends AppCompatActivity
                 Log.d(TAG, "display rationale for location permission");
             permissions = new String[]{Manifest.permission.ACCESS_FINE_LOCATION, Manifest.permission.ACCESS_COARSE_LOCATION};
             message_id = R.string.permission_rationale_location;
+        }
+        else if (permission_code == MY_PERMISSIONS_REQUEST_SETTINGS)
+        {
+            if (MyDebug.LOG)
+                Log.d(TAG, "display rationale for settings permission");
+            permissions = new String[]{Manifest.permission.WRITE_SETTINGS};
+            message_id = R.string.permission_rationale_settings;
         } else
         {
             if (MyDebug.LOG)
@@ -887,31 +943,64 @@ public class MainActivity extends AppCompatActivity
         }
     }
 
-    private void openCamera()
+    private void openCamera(boolean initialOpen)
     {
         // set up the camera and its preview
-        preview = new Preview(applicationInterface, ((ViewGroup) findViewById(R.id.camera_preview)));
+        preview = new Preview(applicationInterface, ((ViewGroup) findViewById(R.id.camera_preview)), initialOpen);
         preview.onResume();
+    }
 
-        if (preview.hasSurface())
-        {
-            beginImaging();
-        }
+    private void beginImaging()
+    {
+        Log.d(TAG, "CameraInitialization: " + cameraInitialization);
+        openCamera(cameraInitialization);
+
+        Log.d(TAG, "Imaging will begin in " + delayTime + " seconds");
+        tvEventLog.append("\nImaging will begin in " + delayTime + " seconds");
+
+        photo_mode_values.add(MyApplicationInterface.PhotoMode.Standard);
+        photo_mode_values.add(MyApplicationInterface.PhotoMode.DRO);
+        photo_mode_values.add(MyApplicationInterface.PhotoMode.HDR);
+
+//        getWSISettings();
+
+        Settings.System.putInt(cResolver, Settings.System.SCREEN_BRIGHTNESS, 0);
+        //Get the current window attributes
+        LayoutParams layoutpars = window.getAttributes();
+        //Set the brightness of this window
+        layoutpars.screenBrightness = 0;
+        //Apply attribute changes to this window
+        window.setAttributes(layoutpars);
+
+        mBackgroundHandler.postDelayed(imagingRunnable, delayTime * 1000);
     }
 
     private void stopImaging()
     {
+        Settings.System.putInt(cResolver, Settings.System.SCREEN_BRIGHTNESS, screenBrightness);
+        //Get the current window attributes
+        LayoutParams layoutpars = window.getAttributes();
+        //Set the brightness of this window
+        layoutpars.screenBrightness = screenBrightness / (float)255;
+        //Apply attribute changes to this window
+        window.setAttributes(layoutpars);
+
         final int status = (Integer) runButton.getTag();
 
         if (status == 1)
         {
             mBackgroundHandler.removeCallbacks(imagingRunnable);
 
-            preview.onPause();
-            preview = null;
+            if(preview != null)
+            {
+                preview.onPause();
+                preview = null;
+            }
 
             runButton.setTag(0);
             runButton.setText(getResources().getString(R.string.runButton_text));
+
+            cameraInitialization = true;
 
             Log.d(TAG, "Imaging Stopped");
             tvEventLog.append("\nImaging Stopped");
@@ -971,12 +1060,21 @@ public class MainActivity extends AppCompatActivity
                 CharSequence dateTime = DateFormat.format("yyyy-MM-dd hh:mm:ss", d.getTime());
                 Log.d(TAG, "Runnable execution started. Time: " + dateTime + ". Interval: " + pictureInterval + " min");
                 tvEventLog.append("\nRunnable execution started. Time: " + dateTime + ". Interval: " + pictureInterval + " min");
-                clickedTakePhoto();
+                if(cameraInitialization)
+                {
+                    getWSISettings();
+                    clickedTakePhoto();
+                    cameraInitialization = false;
+                }
+                else
+                {
+                    openCamera(cameraInitialization);
+                }
             } catch (Exception e)
             {
                 // TODO: handle exception
-                Log.e(TAG, "Error: Runnable exception");
-                tvEventLog.append("\nError: Runnable exception");
+                Log.e(TAG, "Error: Runnable exception - " + e);
+                tvEventLog.append("\nError: Runnable exception - " + e);
             } finally
             {
                 //also call the same runnable to call it at regular interval

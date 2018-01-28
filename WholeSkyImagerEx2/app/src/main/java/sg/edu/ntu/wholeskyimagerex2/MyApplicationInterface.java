@@ -318,11 +318,11 @@ public class MyApplicationInterface implements ApplicationInterface {
 		return null;
 	}
 
-    @Override
-	public void beginImaging()
-    {
-        main_activity.beginImaging();
-    }
+//    @Override
+//	public void captureImage()
+//    {
+//        main_activity.clickedTakePhoto();
+//    }
 
 	/** getImageQualityPref() returns the image quality used for the Camera Controller for taking a
 	 *  photo - in some cases, we may set that to a higher value, then perform processing on the
@@ -845,6 +845,13 @@ public class MyApplicationInterface implements ApplicationInterface {
 		if( MyDebug.LOG )
 			Log.d(TAG, "requestStoragePermission");
 		main_activity.requestStoragePermission();
+	}
+
+	@Override
+	public void requestSettingsPermission() {
+		if( MyDebug.LOG )
+			Log.d(TAG, "requestSettingsPermission");
+		main_activity.requestSettingsPermission();
 	}
 
 	@Override

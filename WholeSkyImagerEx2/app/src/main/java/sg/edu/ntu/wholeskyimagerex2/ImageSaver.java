@@ -1367,60 +1367,67 @@ public class ImageSaver extends Thread {
         }
 
         // I have received crashes where camera_controller was null - could perhaps happen if this thread was running just as the camera is closing?
-        if( success && main_activity.getPreview().getCameraController() != null && update_thumbnail ) {
-            // update thumbnail - this should be done after restarting preview, so that the preview is started asap
-            CameraController.Size size = main_activity.getPreview().getCameraController().getPictureSize();
-            int ratio = (int) Math.ceil((double) size.width / main_activity.getPreview().getView().getWidth());
-            int sample_size = Integer.highestOneBit(ratio);
-            sample_size *= request.sample_factor;
-            if( MyDebug.LOG ) {
-                Log.d(TAG, "    picture width: " + size.width);
-                Log.d(TAG, "    preview width: " + main_activity.getPreview().getView().getWidth());
-                Log.d(TAG, "    ratio        : " + ratio);
-                Log.d(TAG, "    sample_size  : " + sample_size);
-            }
-            Bitmap thumbnail;
-            if( bitmap == null ) {
-                BitmapFactory.Options options = new BitmapFactory.Options();
-                options.inMutable = false;
-                if( Build.VERSION.SDK_INT <= Build.VERSION_CODES.KITKAT ) {
-                    // setting is ignored in Android 5 onwards
-                    options.inPurgeable = true;
+        if(main_activity.getPreview() != null)
+        {
+            if (success && main_activity.getPreview().getCameraController() != null && update_thumbnail)
+            {
+                // update thumbnail - this should be done after restarting preview, so that the preview is started asap
+                CameraController.Size size = main_activity.getPreview().getCameraController().getPictureSize();
+                int ratio = (int) Math.ceil((double) size.width / main_activity.getPreview().getView().getWidth());
+                int sample_size = Integer.highestOneBit(ratio);
+                sample_size *= request.sample_factor;
+                if (MyDebug.LOG)
+                {
+                    Log.d(TAG, "    picture width: " + size.width);
+                    Log.d(TAG, "    preview width: " + main_activity.getPreview().getView().getWidth());
+                    Log.d(TAG, "    ratio        : " + ratio);
+                    Log.d(TAG, "    sample_size  : " + sample_size);
                 }
-                options.inSampleSize = sample_size;
-                thumbnail = BitmapFactory.decodeByteArray(data, 0, data.length, options);
-                // now get the rotation from the Exif data
-                if( MyDebug.LOG )
-                    Log.d(TAG, "rotate thumbnail for exif tags?");
-                thumbnail = rotateForExif(thumbnail, data, picFile);
+                Bitmap thumbnail;
+                if (bitmap == null)
+                {
+                    BitmapFactory.Options options = new BitmapFactory.Options();
+                    options.inMutable = false;
+                    if (Build.VERSION.SDK_INT <= Build.VERSION_CODES.KITKAT)
+                    {
+                        // setting is ignored in Android 5 onwards
+                        options.inPurgeable = true;
+                    }
+                    options.inSampleSize = sample_size;
+                    thumbnail = BitmapFactory.decodeByteArray(data, 0, data.length, options);
+                    // now get the rotation from the Exif data
+                    if (MyDebug.LOG)
+                        Log.d(TAG, "rotate thumbnail for exif tags?");
+                    thumbnail = rotateForExif(thumbnail, data, picFile);
+                } else
+                {
+                    int width = bitmap.getWidth();
+                    int height = bitmap.getHeight();
+                    Matrix matrix = new Matrix();
+                    float scale = 1.0f / (float) sample_size;
+                    matrix.postScale(scale, scale);
+                    if (MyDebug.LOG)
+                        Log.d(TAG, "    scale: " + scale);
+                    thumbnail = Bitmap.createBitmap(bitmap, 0, 0, width, height, matrix, true);
+                    // don't need to rotate for exif, as we already did that when creating the bitmap
+                }
+    //            if( thumbnail == null ) {
+    //                // received crashes on Google Play suggesting that thumbnail could not be created
+    //                if( MyDebug.LOG )
+    //                    Log.e(TAG, "failed to create thumbnail bitmap");
+    //            }
+    //            else {
+    //                final Bitmap thumbnail_f = thumbnail;
+    //                main_activity.runOnUiThread(new Runnable() {
+    //                    public void run() {
+    //                        applicationInterface.updateThumbnail(thumbnail_f);
+    //                    }
+    //                });
+    //                if( MyDebug.LOG ) {
+    //                    Log.d(TAG, "Save single image performance: time after creating thumbnail: " + (System.currentTimeMillis() - time_s));
+    //                }
+    //            }
             }
-            else {
-                int width = bitmap.getWidth();
-                int height = bitmap.getHeight();
-                Matrix matrix = new Matrix();
-                float scale = 1.0f / (float)sample_size;
-                matrix.postScale(scale, scale);
-                if( MyDebug.LOG )
-                    Log.d(TAG, "    scale: " + scale);
-                thumbnail = Bitmap.createBitmap(bitmap, 0, 0, width, height, matrix, true);
-                // don't need to rotate for exif, as we already did that when creating the bitmap
-            }
-//            if( thumbnail == null ) {
-//                // received crashes on Google Play suggesting that thumbnail could not be created
-//                if( MyDebug.LOG )
-//                    Log.e(TAG, "failed to create thumbnail bitmap");
-//            }
-//            else {
-//                final Bitmap thumbnail_f = thumbnail;
-//                main_activity.runOnUiThread(new Runnable() {
-//                    public void run() {
-//                        applicationInterface.updateThumbnail(thumbnail_f);
-//                    }
-//                });
-//                if( MyDebug.LOG ) {
-//                    Log.d(TAG, "Save single image performance: time after creating thumbnail: " + (System.currentTimeMillis() - time_s));
-//                }
-//            }
         }
 
         if( bitmap != null ) {
@@ -1477,6 +1484,7 @@ public class ImageSaver extends Thread {
                 main_activity.runOnUiThread(new Runnable() {
                     @Override
                     public void run() {
+                        main_activity.closeCamera();
                         main_activity.captureComplete();
                     }
                 });
@@ -1489,6 +1497,7 @@ public class ImageSaver extends Thread {
             main_activity.runOnUiThread(new Runnable() {
                 @Override
                 public void run() {
+                    main_activity.closeCamera();
                     main_activity.captureComplete();
                 }
             });
