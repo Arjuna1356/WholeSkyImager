@@ -401,19 +401,21 @@ public class MainActivity extends AppCompatActivity
             return;
         }
 
-        if (ActivityCompat.shouldShowRequestPermissionRationale(this, Manifest.permission.WRITE_SETTINGS))
-        {
-            // Show an explanation to the user *asynchronously* -- don't block
-            // this thread waiting for the user's response! After the user
-            // sees the explanation, try again to request the permission.
-            showRequestPermissionRationale(MY_PERMISSIONS_REQUEST_SETTINGS);
-        } else
-        {
-            // Can go ahead and request the permission
-            if (MyDebug.LOG)
-                Log.d(TAG, "requesting settings permission...");
-            ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.WRITE_SETTINGS}, MY_PERMISSIONS_REQUEST_SETTINGS);
-        }
+        Intent intent = new Intent(Settings.ACTION_MANAGE_WRITE_SETTINGS);
+        startActivity(intent);
+//        if (ActivityCompat.shouldShowRequestPermissionRationale(this, Manifest.permission.WRITE_SETTINGS))
+//        {
+//            // Show an explanation to the user *asynchronously* -- don't block
+//            // this thread waiting for the user's response! After the user
+//            // sees the explanation, try again to request the permission.
+//            showRequestPermissionRationale(MY_PERMISSIONS_REQUEST_SETTINGS);
+//        } else
+//        {
+//            // Can go ahead and request the permission
+//            if (MyDebug.LOG)
+//                Log.d(TAG, "requesting settings permission...");
+//            ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.WRITE_SETTINGS}, MY_PERMISSIONS_REQUEST_SETTINGS);
+//        }
     }
 
     @Override
@@ -734,6 +736,8 @@ public class MainActivity extends AppCompatActivity
                 if (MyDebug.LOG)
                     Log.d(TAG, "camera permission not available");
                 applicationInterface.requestCameraPermission();
+
+                return;
             }
             // Add permission for camera and let user grant the permission
             if ((ContextCompat.checkSelfPermission(this, Manifest.permission.WRITE_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED))
@@ -741,15 +745,21 @@ public class MainActivity extends AppCompatActivity
                 if (MyDebug.LOG)
                     Log.d(TAG, "storage permission not available");
                 applicationInterface.requestStoragePermission();
+
+                return;
             }
             // Add permission for camera and let user grant the permission
-            if ((ContextCompat.checkSelfPermission(this, Manifest.permission.WRITE_SETTINGS) != PackageManager.PERMISSION_GRANTED))
+            // Check whether has the write settings permission or not.
+            boolean settingsCanWrite = Settings.System.canWrite(this);
+
+            if (!settingsCanWrite)
             {
                 if (MyDebug.LOG)
                     Log.d(TAG, "settings permission not available");
                 applicationInterface.requestSettingsPermission();
+
+                return;
             }
-            return;
         }
     }
 
