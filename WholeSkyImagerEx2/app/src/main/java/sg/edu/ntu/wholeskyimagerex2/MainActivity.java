@@ -121,7 +121,11 @@ public class MainActivity extends AppCompatActivity
 
         initialize(savedInstanceState);
 
-        checkPermissions();
+        if(!checkPermissions())
+        {
+            applicationInterface.requestSettingsPermission();
+            applicationInterface.requestPermissions();
+        }
     }
 
     @Override
@@ -177,7 +181,12 @@ public class MainActivity extends AppCompatActivity
     public void onResume()
     {
         super.onResume();
-        Settings.System.putInt(cResolver, Settings.System.SCREEN_BRIGHTNESS_MODE, Settings.System.SCREEN_BRIGHTNESS_MODE_MANUAL);
+
+        if(Build.VERSION.SDK_INT < Build.VERSION_CODES.M || Settings.System.canWrite(this))
+        {
+            Settings.System.putInt(cResolver, Settings.System.SCREEN_BRIGHTNESS_MODE, Settings.System.SCREEN_BRIGHTNESS_MODE_MANUAL);
+        }
+
         Log.d(TAG, "onResume");
         startBackgroundThread();
     }
@@ -195,7 +204,10 @@ public class MainActivity extends AppCompatActivity
 
         stopBackgroundThread();
 
-        Settings.System.putInt(cResolver, Settings.System.SCREEN_BRIGHTNESS_MODE, Settings.System.SCREEN_BRIGHTNESS_MODE_AUTOMATIC);
+        if(Build.VERSION.SDK_INT < Build.VERSION_CODES.M || Settings.System.canWrite(this))
+        {
+            Settings.System.putInt(cResolver, Settings.System.SCREEN_BRIGHTNESS_MODE, Settings.System.SCREEN_BRIGHTNESS_MODE_AUTOMATIC);
+        }
     }
 
     public void setupActionBar()
@@ -416,6 +428,14 @@ public class MainActivity extends AppCompatActivity
 //                Log.d(TAG, "requesting settings permission...");
 //            ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.WRITE_SETTINGS}, MY_PERMISSIONS_REQUEST_SETTINGS);
 //        }
+    }
+
+    public void requestPermissions()
+    {
+        int PERMISSION_ALL = 1;
+        String[] PERMISSIONS = {Manifest.permission.CAMERA, Manifest.permission.WRITE_EXTERNAL_STORAGE};
+
+        ActivityCompat.requestPermissions(this, PERMISSIONS, PERMISSION_ALL);
     }
 
     @Override
@@ -726,28 +746,10 @@ public class MainActivity extends AppCompatActivity
         editor.apply();
     }
 
-    private void checkPermissions()
+    private boolean checkPermissions()
     {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M)
         {
-            // Add permission for camera and let user grant the permission
-            if ((ContextCompat.checkSelfPermission(this, Manifest.permission.CAMERA) != PackageManager.PERMISSION_GRANTED))
-            {
-                if (MyDebug.LOG)
-                    Log.d(TAG, "camera permission not available");
-                applicationInterface.requestCameraPermission();
-
-                return;
-            }
-            // Add permission for camera and let user grant the permission
-            if ((ContextCompat.checkSelfPermission(this, Manifest.permission.WRITE_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED))
-            {
-                if (MyDebug.LOG)
-                    Log.d(TAG, "storage permission not available");
-                applicationInterface.requestStoragePermission();
-
-                return;
-            }
             // Add permission for camera and let user grant the permission
             // Check whether has the write settings permission or not.
             boolean settingsCanWrite = Settings.System.canWrite(this);
@@ -756,11 +758,34 @@ public class MainActivity extends AppCompatActivity
             {
                 if (MyDebug.LOG)
                     Log.d(TAG, "settings permission not available");
-                applicationInterface.requestSettingsPermission();
+//                applicationInterface.requestSettingsPermission();
 
-                return;
+                return false;
             }
+
+            // Add permission for camera and let user grant the permission
+            if ((ContextCompat.checkSelfPermission(this, Manifest.permission.CAMERA) != PackageManager.PERMISSION_GRANTED))
+            {
+                if (MyDebug.LOG)
+                    Log.d(TAG, "camera permission not available");
+//                applicationInterface.requestCameraPermission();
+
+                return false;
+            }
+            // Add permission for camera and let user grant the permission
+            if ((ContextCompat.checkSelfPermission(this, Manifest.permission.WRITE_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED))
+            {
+                if (MyDebug.LOG)
+                    Log.d(TAG, "storage permission not available");
+//                applicationInterface.requestStoragePermission();
+
+                return false;
+            }
+
+            return true;
         }
+
+        return true;
     }
 
     /**
@@ -974,7 +999,10 @@ public class MainActivity extends AppCompatActivity
 
 //        getWSISettings();
 
-        Settings.System.putInt(cResolver, Settings.System.SCREEN_BRIGHTNESS, 0);
+        if(Build.VERSION.SDK_INT < Build.VERSION_CODES.M || Settings.System.canWrite(this))
+        {
+            Settings.System.putInt(cResolver, Settings.System.SCREEN_BRIGHTNESS, 0);
+        }
         //Get the current window attributes
         LayoutParams layoutpars = window.getAttributes();
         //Set the brightness of this window
@@ -987,7 +1015,10 @@ public class MainActivity extends AppCompatActivity
 
     private void stopImaging()
     {
-        Settings.System.putInt(cResolver, Settings.System.SCREEN_BRIGHTNESS, screenBrightness);
+        if(Build.VERSION.SDK_INT < Build.VERSION_CODES.M || Settings.System.canWrite(this))
+        {
+            Settings.System.putInt(cResolver, Settings.System.SCREEN_BRIGHTNESS, screenBrightness);
+        }
         //Get the current window attributes
         LayoutParams layoutpars = window.getAttributes();
         //Set the brightness of this window

@@ -855,6 +855,14 @@ public class MyApplicationInterface implements ApplicationInterface {
 	}
 
 	@Override
+	public void requestPermissions()
+	{
+		if( MyDebug.LOG )
+			Log.d(TAG, "requestPermission");
+		main_activity.requestPermissions();
+	}
+
+	@Override
 	public void setExposureTimePref(long exposure_time) {
 		SharedPreferences sharedPreferences = PreferenceManager.getDefaultSharedPreferences(getContext());
 		SharedPreferences.Editor editor = sharedPreferences.edit();
