@@ -335,6 +335,16 @@ public class MainActivity extends AppCompatActivity
                 && preview.supportsExpoBracketing());
     }
 
+    public void clickedTakePhoto()
+    {
+        if (MyDebug.LOG)
+            Log.d(TAG, "clickedTakePhoto");
+
+        tvEventLog.append("\nCapturing Image");
+
+        this.preview.takePicturePressed();
+    }
+
     public boolean supportsExpoBracketing()
     {
         return preview.supportsExpoBracketing();
@@ -1004,8 +1014,6 @@ public class MainActivity extends AppCompatActivity
         photo_mode_values.add(MyApplicationInterface.PhotoMode.DRO);
         photo_mode_values.add(MyApplicationInterface.PhotoMode.HDR);
 
-//        getWSISettings();
-
         if(Build.VERSION.SDK_INT < Build.VERSION_CODES.M || Settings.System.canWrite(this))
         {
             Settings.System.putInt(cResolver, Settings.System.SCREEN_BRIGHTNESS, 0);
@@ -1056,16 +1064,6 @@ public class MainActivity extends AppCompatActivity
         }
     }
 
-    private void clickedTakePhoto()
-    {
-        if (MyDebug.LOG)
-            Log.d(TAG, "clickedTakePhoto");
-
-        tvEventLog.append("\nCapturing Image");
-
-        this.preview.takePicturePressed();
-    }
-
     private void waitUntilImageQueueEmpty()
     {
         if (MyDebug.LOG)
@@ -1111,12 +1109,15 @@ public class MainActivity extends AppCompatActivity
                 tvEventLog.append("\nRunnable execution started. Time: " + dateTime + ". Interval: " + pictureInterval + " min");
                 if(cameraInitialization)
                 {
+                    Log.d(TAG, "Camera already open");
                     getWSISettings();
                     clickedTakePhoto();
                     cameraInitialization = false;
                 }
                 else
                 {
+                    Log.d(TAG, "Open camera");
+//                    getWSISettings();
                     openCamera(cameraInitialization);
                 }
             } catch (Exception e)

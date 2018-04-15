@@ -556,6 +556,7 @@ public class MyApplicationInterface implements ApplicationInterface {
 			Log.d(TAG, "getExpoBracketingNImagesPref");
 		int n_images;
 		PhotoMode photo_mode = getPhotoMode();
+
 		if( photo_mode == PhotoMode.HDR ) {
 			// always set 3 images for HDR
 			n_images = 3;
@@ -613,10 +614,24 @@ public class MyApplicationInterface implements ApplicationInterface {
 		String photo_mode_pref = sharedPreferences.getString(PreferenceKeys.getPhotoModePreferenceKey(), "preference_photo_mode_std");
 		boolean dro = photo_mode_pref.equals("preference_photo_mode_dro");
 		if( dro && main_activity.supportsDRO() )
-			return PhotoMode.DRO;
+        {
+            if( MyDebug.LOG )
+                Log.d(TAG, "Photo Mode: DRO");
+
+            return PhotoMode.DRO;
+        }
+
 		boolean hdr = photo_mode_pref.equals("preference_photo_mode_hdr");
 		if( hdr && main_activity.supportsHDR() )
-			return PhotoMode.HDR;
+        {
+            if( MyDebug.LOG )
+                Log.d(TAG, "Photo Mode: HDR");
+
+            return PhotoMode.HDR;
+        }
+
+        if( MyDebug.LOG )
+            Log.d(TAG, "Photo Mode: STD");
 		return PhotoMode.Standard;
 	}
 
@@ -1037,6 +1052,12 @@ public class MyApplicationInterface implements ApplicationInterface {
 
 		return success;
 	}
+
+	@Override
+    public void captureImage()
+    {
+        main_activity.clickedTakePhoto();
+    }
 
 	@Override
 	public boolean onPictureTaken(byte [] data, Date current_date, String timeStamp) {

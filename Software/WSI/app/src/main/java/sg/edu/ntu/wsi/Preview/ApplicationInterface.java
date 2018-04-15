@@ -97,7 +97,7 @@ public interface ApplicationInterface {
 	void clearExposureTimePref();
 	void setFocusDistancePref(float focus_distance);
 
-//	void beginImaging();
+	void captureImage();
 
 	// callbacks
 	boolean onPictureTaken(byte [] data, Date current_date, String timeStamp);

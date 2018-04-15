@@ -1043,11 +1043,6 @@ public class Preview implements SurfaceHolder.Callback, TextureView.SurfaceTextu
         {
             Log.d(TAG, "openCamera: total time to open camera: " + (System.currentTimeMillis() - debug_time));
         }
-
-        if (!initialOpen)
-        {
-            takePicturePressed();
-        }
     }
 
     /**
@@ -1127,6 +1122,7 @@ public class Preview implements SurfaceHolder.Callback, TextureView.SurfaceTextu
             Log.d(TAG, "cameraOpened()");
             debug_time = System.currentTimeMillis();
         }
+
         boolean take_photo = false;
         if (camera_controller != null)
         {
@@ -1177,7 +1173,10 @@ public class Preview implements SurfaceHolder.Callback, TextureView.SurfaceTextu
             Log.d(TAG, "openCamera: total time for cameraOpened: " + (System.currentTimeMillis() - debug_time));
         }
 
-//		applicationInterface.beginImaging();
+        if (!initialOpen)
+        {
+            applicationInterface.captureImage();
+        }
     }
 
 
